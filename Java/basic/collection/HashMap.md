@@ -131,9 +131,43 @@ put操作的基本流程:
 (3)如果能够找到该key的结点, 则执行更新操作, 无需对modCount增1。   
 (4)如果没有找到该key的结点, 则执行插入操作, 需要对modCount增1。   
 (5)在执行插入操作时, 如果bucket中bin的数量超过TREEIFY_THRESHOLD, 则要树化。   
-(6)在执行插入操作之后, 如果数组size超过了threshold, 这要扩容。  
+(6)在执行插入操作之后, 如果数组size超过了threshold, 这要扩容;  
+### 怎么计算 hash 表位置  
+```
+public V put(K key, V value) {
+    return putVal(hash(key), key, value, false, true);
+}
+static final int hash(Object key) {
+    int h;
+    return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+}
+
+final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
+               boolean evict) {
+    Node<K,V>[] tab; Node<K,V> p; int n, i;
+    if ((tab = table) == null || (n = tab.length) == 0)
+        n = (tab = resize()).length;
+    if ((p = tab[i = (n - 1) & hash]) == null)
+        tab[i] = newNode(hash, key, value, null);
+    }
+}        
+```
+总体来讲就是, 
+1.. 计算 h = key.hashCode();  
+2.. h >>> 16;  无符号项右位移 16位,  右边的低位被丢弃, 左边的高位补 0;  
+3.. 再 把之前的 hashCode 异或 上 位移之后的结果值;  
+4.. 取当前的hash数组的长度 n, 当前的 index = (n-1) & hash;  
+
+### 扩容   
+因为 hash 值的计算规则是固定的, 所以在扩容的时候, 不需要再一次计算 hash 值;  
+而是需要 把老的 hash数组的元素, 迁移到新的 hash 数组;  
+hash 数组的索引值, 还是 (length -1) & hash 值;  
+扩容过程中判断, hash & length 是 0 还是 1, 如果是 0 , 则待在原来的位置, 如果是 1 , 移动到新的位置;  
+
 
 ### 参考  
+http://yikun.github.io/2015/04/01/Java-HashMap工作原理及实现/  
+
 HashMap类的注释翻译  
 http://blog.csdn.net/fan2012huan/article/details/510859243  
 
@@ -168,3 +202,5 @@ http://www.jianshu.com/p/aa017a3ddc40
 http://www.jianshu.com/p/e2f75c8cce01  
 http://blog.csdn.net/lianhuazy167/article/details/66967698  
 
+hash 索引计算  
+https://www.cnblogs.com/zhengwang/p/8136164.html  
