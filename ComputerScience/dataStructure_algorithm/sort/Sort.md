@@ -26,6 +26,28 @@ private static int[] bubbleSort(int array[]) {
     return array;
 }
 ```
+### 简单选择排序  
+```
+private static int[] selectionSort(int[] array) {
+    if (array == null || array.length <= 1) {
+        return array;
+    }
+    for (int i = 0; i < array.length - 1; i++) {
+        int max = i;
+        for (int j = i + 1; j < array.length; j++) {
+            if (array[max] > array[j]) {
+                max = j;
+            }
+            if (max != i) {
+                int temp = array[max];
+                array[max] = array[i];
+                array[i] = temp;
+            }
+        }
+    }
+    return array;
+}
+```
 ![常见排序算法时间复杂度和空间复杂度](../ImageFiles/sort_001.png)  
 
 http://www.jianshu.com/p/ae97c3ceea8d  
