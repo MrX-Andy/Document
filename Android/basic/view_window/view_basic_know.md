@@ -1,5 +1,11 @@
-### 自定义控件相关 基础知识   
+自定义控件相关 基础知识   
 
+### onLayout layout  
+继承 View, 可以重写 onLayout 和 layout;  
+继承 ViewGroup, 只可以重写 onLayout, layout 方法是 final 类型的,  不可以重写;  
+
+onLayout 收到的是, 在父窗体的坐标;  
+自定义 ViewGroup 需要在 onMeasure 里面调用 measureChildren 或者, 子 view.measure 方法, 否则, 子 view 的 onMeasure 不会被执行;  
 
 ### 渲染性能  
 大多数用户感知到的卡顿等性能问题的最主要根源都是因为渲染性能。从设计师的角度，他们希望App能够有更多的动画，图片等时尚元素来实现流畅的用户体验。  
@@ -114,7 +120,10 @@ https://hk.saowen.com/a/185130ca1a868cf4f6746bc998c897fd3ec1d189930d53bf91d000bd
 https://hk.saowen.com/a/88c274f18d44b90a649a68fb39eba3b6ae1e03fd9469bc6177e6d8117f5c0088  
 
 onMeasure  
-https://huangtianyu.gitee.io/2018/01/03/%E8%87%AA%E5%AE%9A%E4%B9%89%E6%8E%A7%E4%BB%B6View%E4%B9%8BonMeasure%E8%B0%83%E7%94%A8%E6%97%B6%E6%9C%BA%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/  
+https://huangtianyu.gitee.io/2018/01/03/自定义控件View之onMeasure调用时机源码分析  
+
+为什么 onMeasure 执行多次  
+https://blog.csdn.net/jewleo/article/details/39547631  
 
 Android 屏幕刷新机制  
 https://www.jianshu.com/p/0d00cb85fdf3   
