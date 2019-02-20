@@ -91,6 +91,41 @@ notify() 和 notifyAll()工作机制一样, 区别在于 notifyAll()会将等待
 注意, notifyAll() 比 notify() 更加常用, 因为notify()方法只会唤起一个线程, 且无法指定唤醒哪一个线程,  
 所以只有在多个执行相同任务的线程在并发运行时, 我们不关心哪一个线程被唤醒时, 才会使用notify();  
 
+### 示例  
+```
+static final class Entity {
+    private static int h;
+    synchronized static void sTest() {
+        LogTrack.w("静态 方法");
+        ThreadUtil.sleep(2000);
+        h = 2;
+    }
+
+    synchronized static void sTest2() {
+        LogTrack.w("静态 方法");
+        ThreadUtil.sleep(2000);
+        h = 2;
+    }
+
+    synchronized void test() {
+        LogTrack.w("非静态 方法");
+        ThreadUtil.sleep(2000);
+        h = 1;
+    }
+
+    synchronized void test2() {
+        LogTrack.w("非静态 方法");
+        ThreadUtil.sleep(2000);
+        h = 3;
+    }
+}
+```
+假设有多个 thread, 只有一个 Entity 的实例, 那么 在
+同时 访问 test, test2, 会发生锁的竞争;  
+同时访问 sTest, sTest2, 会发生锁的竞争;  
+同时访问 sTest 和 test, 不会发生锁的竞争;  
+因为, 静态的同步方法, 锁的对象是 Class, 非静态的同步方法, 锁的对象是当前类的实例;  
+
 ### 参考  
 http://cmsblogs.com/?p=2071  
 http://www.cnblogs.com/paddix/p/5367116.html  

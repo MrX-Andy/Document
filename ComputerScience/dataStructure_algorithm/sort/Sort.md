@@ -1,18 +1,8 @@
 ### 冒泡排序  
-
 ```
-两层 for 循环
-for  i in 0.. array.size-1
-    for j in 0.. array.size-2
-```
-整体的思想就是，  
-1.i=0，不断比较array[j]和array[j+1]的大小，如果array[j]较大，则交换两者，一直到数组结束；j in i..array.size-1  
-2.不断重复1操作，直至i到array.size-1  
-
-```
-private static int[] bubbleSort(int array[]) {
+private static void bubbleSort(int array[]) {
     if (array == null || array.length <= 1) {
-        return array;
+        return;
     }
     for (int i = 0; i < array.length - 1; i++) {
         for (int j = 0; j < array.length - i - 1; j++) {
@@ -23,31 +13,79 @@ private static int[] bubbleSort(int array[]) {
             }
         }
     }
-    return array;
 }
 ```
 ### 简单选择排序  
 ```
-private static int[] selectionSort(int[] array) {
+private static void selectionSort(int[] array) {
     if (array == null || array.length <= 1) {
-        return array;
+        return;
     }
     for (int i = 0; i < array.length - 1; i++) {
-        int max = i;
+        int k = i;
         for (int j = i + 1; j < array.length; j++) {
-            if (array[max] > array[j]) {
-                max = j;
-            }
-            if (max != i) {
-                int temp = array[max];
-                array[max] = array[i];
-                array[i] = temp;
+            if (array[k] > array[j]) {
+                k = j;
             }
         }
+        if (k != i) {
+            int temp = array[k];
+            array[k] = array[i];
+            array[i] = temp;
+        }
     }
-    return array;
 }
 ```
+### 快速排序 #递归  
+```
+public static void sort(int array[]) {
+    if (array == null || array.length <= 1) {
+        return;
+    }
+    sort(array, 0, array.length - 1);
+}
+
+private static void sort(int[] array, int low, int high) {
+    int par = partition(array, low, high);
+    if (par > low + 1) {  //  左边还需要快排
+        sort(array, low, par - 1);
+    }
+    if (par < high - 1) {  //  右边还需要快排
+        sort(array, par + 1, high);
+    }
+}
+
+/**
+ * 返回基准的下标
+ */
+public static int partition(int[] array, int low, int high) {
+    int pivot = array[low];  //  选第一个元素作为枢纽元
+    while (low < high) {
+        while (low < high && array[high] >= pivot) {
+            high--;
+        }
+        array[low] = array[high];  //  从后面开始找到第一个小于pivot的元素，放到low位置
+        while (low < high && array[low] <= pivot) {
+            low++;
+        }
+        array[high] = array[low];  //  从前面开始找到第一个大于pivot的元素，放到high位置
+    }
+    array[low] = pivot;  //  最后枢纽元放到low的位置
+    return low;
+}
+``` 
+### 快速排序 #非递归  
+```
+
+``` 
 ![常见排序算法时间复杂度和空间复杂度](../ImageFiles/sort_001.png)  
 
+
+### 参考  
 http://www.jianshu.com/p/ae97c3ceea8d  
+
+快速排序, 非递归写得好  
+https://www.cnblogs.com/TenosDoIt/p/3665038.html  
+
+快速排序, 原理介绍  
+https://blog.csdn.net/adusts/article/details/80882649  
