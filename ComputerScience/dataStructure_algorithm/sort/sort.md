@@ -76,7 +76,49 @@ public static int partition(int[] array, int low, int high) {
 ``` 
 ### 快速排序 #非递归  
 ```
+/**
+ * 快速排序#非递归用
+ */
+public static void sort(int[] array) {
+    int stack[] = new int[array.length];
+    //  栈中保存下次需要排序的子数组的开始位置和结束位置
+    int top = -1;
+    stack[++top] = 0;
+    stack[++top] = array.length - 1;
+    while (top > 0) {
+        int high = stack[top--];
+        int low = stack[top--];
+        int mid = partition(array, low, high);
+        if (mid + 1 < high) {  //  右边子数组入栈
+            stack[++top] = mid + 1;
+            stack[++top] = high;
+        }
+        if (low < mid - 1) {  //  左边子数组入栈
+            stack[++top] = low;
+            stack[++top] = mid - 1;
+        }
+    }
+}
 
+
+/**
+ * 返回基准的下标
+ */
+public static int partition(int[] array, int low, int high) {
+    int pivot = array[low];  //  选第一个元素作为枢纽元
+    while (low < high) {
+        while (low < high && array[high] >= pivot) {
+            high--;
+        }
+        array[low] = array[high];  //  从后面开始找到第一个小于pivot的元素，放到low位置
+        while (low < high && array[low] <= pivot) {
+            low++;
+        }
+        array[high] = array[low];  //  从前面开始找到第一个大于pivot的元素，放到high位置
+    }
+    array[low] = pivot;  //  最后枢纽元放到low的位置
+    return low;
+}
 ``` 
 ![常见排序算法时间复杂度和空间复杂度](../ImageFiles/sort_001.png)  
 
