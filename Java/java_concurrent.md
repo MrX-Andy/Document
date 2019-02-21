@@ -70,3 +70,9 @@ http://www.cnblogs.com/paddix/p/5374810.html
 https://blog.csdn.net/javazejian  
 https://juejin.im/post/5c37377351882525ec200f9e  
 https://juejin.im/entry/5c516476f265da61736aab3e  
+
+从CPU Cache出发彻底弄懂volatile/synchronized/cas机制  
+https://juejin.im/post/5c6b99e66fb9a049d51a1094  
+
+并发与多线程基础  
+https://juejin.im/post/5c6b999d6fb9a049fb443a34  

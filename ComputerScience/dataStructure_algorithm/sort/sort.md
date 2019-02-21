@@ -46,12 +46,15 @@ public static void sort(int array[]) {
 }
 
 private static void sort(int[] array, int low, int high) {
-    int par = partition(array, low, high);
-    if (par > low + 1) {  //  左边还需要快排
-        sort(array, low, par - 1);
+    if (array == null || array.length <= 1) {
+        return;
     }
-    if (par < high - 1) {  //  右边还需要快排
-        sort(array, par + 1, high);
+    int index = partition(array, low, high);
+    if (low < index - 1) {  //  左边还需要快排
+        sort(array, low, index - 1);
+    }
+    if (index + 1 < high) {  //  右边还需要快排
+        sort(array, index + 1, high);
     }
 }
 
@@ -79,7 +82,10 @@ public static int partition(int[] array, int low, int high) {
 /**
  * 快速排序#非递归用
  */
-public static void sort(int[] array) {
+public static void sort(int array[]) {
+    if (array == null || array.length <= 1) {
+        return;
+    }
     int stack[] = new int[array.length];
     //  栈中保存下次需要排序的子数组的开始位置和结束位置
     int top = -1;
@@ -88,14 +94,14 @@ public static void sort(int[] array) {
     while (top > 0) {
         int high = stack[top--];
         int low = stack[top--];
-        int mid = partition(array, low, high);
-        if (mid + 1 < high) {  //  右边子数组入栈
-            stack[++top] = mid + 1;
-            stack[++top] = high;
-        }
-        if (low < mid - 1) {  //  左边子数组入栈
+        int index = partition(array, low, high);
+        if (low < index - 1) {  //  左边子数组入栈
             stack[++top] = low;
-            stack[++top] = mid - 1;
+            stack[++top] = index - 1;
+        }
+        if (index + 1 < high) {  //  右边子数组入栈
+            stack[++top] = index + 1;
+            stack[++top] = high;
         }
     }
 }

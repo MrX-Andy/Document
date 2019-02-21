@@ -181,7 +181,7 @@ http://www.cnblogs.com/dingyingsi/p/3760730.html
 https://github.com/LRH1993/android_interview/blob/master/java/virtual-machine/Garbage-Collector.md  
 http://blog.csdn.net/ns_code/article/details/17565503  
 https://juejin.im/post/5b8f7e43f265da0afe62b9f8  
-
 https://blog.csdn.net/qq_26222859/article/details/73135660  
 https://blog.csdn.net/vegetable_bird_001/article/details/51278339  
+https://juejin.im/post/5c6b987ae51d45362c3631ca 
 

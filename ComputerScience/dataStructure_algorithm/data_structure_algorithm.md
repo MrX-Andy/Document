@@ -7,7 +7,7 @@
 [栈结构](dataStructure/stack/Stack.md)  
 [哈希表](dataStructure/hash/Hash.md)  
 [堆结构](dataStructure/heap/Heap.md)  
-
+[排序算法](sort/sort.md)  
 [常见面试题](leetcode/leet_code.md)  
 
 ### 参考  
