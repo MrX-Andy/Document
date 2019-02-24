@@ -1,8 +1,6 @@
 ### Android相关知识  
-[Launcher 启动流程](basic/context/application_launcher.md)  
-
-进程间通信;  IPC;  Binder机制;  
-[链接](basic/ipc_service/binder.md)  
+zygote#启动流程;  进程间通信;  IPC;  Binder机制;  
+[链接](basic/ipc_service/system_zygote_binder.md)  
 
 [进程, 进程优先级](basic/ipc_service/process.md)  
 
@@ -43,10 +41,12 @@ MVVM;  DataBinding;  LiveData;
 [Android 事件分发机制](basic/view_window/dispatchTouchEvent.md)  
 [对LayoutInflater的理解](basic/view_window/LayoutInflater.md)  
 
-对 Activity, Window, View 的认识;  
+Activity#setContentView 机制;  
+对Activity-Window-View的认识;  
 [链接](basic/view_window/activity_window_view.md)  
 
-屏幕刷新机制;   invalidate;  requestLayout  
+View 绘制原理, View 绘制时机, 屏幕刷新机制;   
+invalidate;  requestLayout;  
 [链接](basic/view_window/invalidate_requestLayout.md)  
 
 动画效果  Animation 与 Animator;  

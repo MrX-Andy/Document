@@ -1,5 +1,24 @@
 Activity 常用方法  
+设置全屏  
+```
+getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+```
 
+去掉 Activity 标题  
+```
+requestWindowFeature(Window.FEATURE_NO_TITLE);  
+getActionBar().hide();  
+```
+
+重启当前Activity    
+```
+Intent intent = getIntent();  
+intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);  
+overridePendingTransition(0, 0);  
+finish();  
+startActivity(intent);  
+overridePendingTransition(0, 0);  
+```
 ### 物理按键相关
 点击 手机返回键, 切换后台, 不是finish  
 ```
@@ -127,27 +146,6 @@ protected void onStop() {
 	ToastUtil.cancel();
 }
 ```
-
-去掉 Activity 标题  
-```
-requestWindowFeature(Window.FEATURE_NO_TITLE);  
-getActionBar().hide();  
-```
-开启全屏  
-```
-getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-``` 
-
-重启当前Activity    
-```
-Intent intent = getIntent();  
-intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);  
-overridePendingTransition(0, 0);  
-finish();  
-startActivity(intent);  
-overridePendingTransition(0, 0);  
-```
-
 ### 不同App 的 Activity 之间的传值  
 A App:   
 ```

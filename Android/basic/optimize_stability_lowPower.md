@@ -91,17 +91,6 @@ public boolean onKeyDown(int keyCode, KeyEvent event) {
     return super.onKeyDown(keyCode, event);
 }
 ```
-
-参考如何计算 App 的启动时间  
-```
-adb shell am start -S -W 包名/启动类的全限定名 ,  -S 表示重启当前应用;  
-adb shell am start -S -W com.example.moneyqian.demo/com.example.moneyqian.demo.MainActivity  
-```
-ThisTime: 最后一个 Activity 的启动耗时;  
-TotalTime : 启动一连串的 Activity 总耗时;  
-WaitTime : 应用进程的创建过程 + TotalTime;  
-最后总结一下 , 如果需要统计从点击桌面图标到 Activity 启动完毕, 可以用WaitTime作为标准, 但是系统的启动时间优化不了, 所以优化冷启动我们只要在意 ThisTime 即可;  
-
 对初始化做一下分类:  
 必要的组件一定要在主线程中立即初始化(入口 Activity 可能立即会用到);  
 组件一定要在主线程中初始化, 但是可以延迟初始化;  
@@ -120,6 +109,21 @@ new Thread(new Runnable() {
     }
 }).start();
 ```
+### 计算启动时间  
+如何计算 App 的启动时间, adb 计算的事件有误差  
+```
+adb shell am start -S -W 包名/启动类的全限定名 ,  -S 表示重启当前应用;  
+adb shell am start -S -W com.example.moneyqian.demo/com.example.moneyqian.demo.MainActivity  
+```
+ThisTime: 最后一个 Activity 的启动耗时;  
+TotalTime : 启动一连串的 Activity 总耗时;  
+WaitTime : 应用进程的创建过程 + TotalTime;  
+最后总结一下 , 如果需要统计从点击桌面图标到 Activity 启动完毕, 可以用WaitTime作为标准, 但是系统的启动时间优化不了, 所以优化冷启动我们只要在意 ThisTime 即可;  
+
+怎么精确统计?  
+Application#attachBaseContext 是进程启动的回调, 冷启动开始的回调;  
+Activity#onWindowFocusChanged 是Activity绘制完成的回调, 冷启动结束的回调;  
+
 ### ANR#分析  
 KeyDispatchTimeout  
 input 事件在5S内没有处理完成发生了ANR;  
@@ -147,7 +151,42 @@ logcat 日志关键字: timeout publishing content providers;
 5.. service binder的连接达到上线无法和和 System Server通信;  
 6.. 系统资源已耗尽, 如: 管道-CPU-IO;   
 
+### StrictMode  
+StrictMode 自 API 9 开始引入, 某些API方法也从 API 11 引入, 使用时应该注意 API 级别;  
+查看结果,  adb logcat | grep StrictMode  
+通常情况下 StrictMode 给出的耗时相对实际情况偏高, 并不是真正的耗时数据;  
+无法监控 JNI 中的磁盘 IO 和网络请求;  
 
+ThreadPolicy  
+线程策略检测的内容有  
+自定义的耗时调用 使用 detectCustomSlowCalls() 开启  
+磁盘读取操作 使用 detectDiskReads() 开启  
+磁盘写入操作 使用 detectDiskWrites() 开启  
+网络操作 使用 detectNetwork() 开启  
+
+VmPolicy  
+虚拟机策略检测的内容有  
+Activity泄露 使用 detectActivityLeaks() 开启  
+未关闭的 Closable 对象泄露 使用 detectLeakedClosableObjects() 开启  
+泄露的 SqLite 对象 使用 detectLeakedSqlLiteObjects() 开启  
+检测实例数量 使用 setClassInstanceLimit() 开启  
+```
+if (BuildConfig.DEBUG) {
+    StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+            .detectAll()  /*来检测所有想检测的东西*/
+            .detectActivityLeaks()  /*检测Activity内存泄露*/
+            .detectLeakedClosableObjects()  /*检测未关闭的Closable对象*/
+            .detectLeakedSqlLiteObjects()   /*检测Sqlite对象是否关闭*/
+            .penaltyLog().build());
+    
+    StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+            .detectAll()  /*来检测所有想检测的东西*/
+            .detectDiskReads()/*磁盘读取操作检测*/
+            .detectDiskWrites()/*检测磁盘写入操作*/
+            .detectNetwork() /*检测网络操作*/
+            .penaltyLog().build());
+}
+```
 ### 参考  
 https://www.jianshu.com/p/d5a843cb7ab1  
 http://landerlyoung.github.io/blog/2014/10/31/androidzhong-de-wakelockshi-yong/  
@@ -171,6 +210,21 @@ https://hk.saowen.com/a/7fbf7cc5ab331bd20b3ecbf353658f85364e98f26cbfaaad45623acb
 https://hk.saowen.com/a/640a8ebc0073b860b139a748ca73bffa7a27371599a655acade392210661055b  
 https://hk.saowen.com/a/87e29c38c0bf3be74aab16376b704076034e61a90b752de617cbec73f93dd5b2  
 https://hk.saowen.com/a/75acd3ae584edd55df9006d72e0f711c4905f3ded04b5865a7c2e4c21cdf9a81  
+https://blog.csdn.net/self_study/article/details/61919483  
+https://blog.csdn.net/self_study/article/details/66969064  
+https://blog.csdn.net/self_study/article/details/68946441  
 
 ANR  
 https://juejin.im/post/5be698d4e51d452acb74ea4c  
+
+StrictMode  
+https://blog.csdn.net/u014099894/article/details/52917088  
+https://droidyue.com/blog/2015/09/26/android-tuning-tool-strictmode  
+
+性能优化  
+https://blog.csdn.net/woyaowenzi/article/details/9273839  
+https://blog.csdn.net/csdn_aiyang/article/details/74989318  
+https://www.jianshu.com/p/bef74a4b6d5e  
+
+启动时间  
+https://www.jianshu.com/p/59a2ca7df681  
