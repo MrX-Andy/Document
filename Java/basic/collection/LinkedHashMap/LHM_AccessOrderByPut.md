@@ -1,10 +1,4 @@
-###### accessOrder 为false，存取有序
 
-
-> 我们看一下put操作
-
-##### 1. LinkedHashMap 只能调用父类 HashMap 的 public V put(K key, V value);  
-##### 2. final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict);  // 所以 无法 重写的
 ```
  final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
                    boolean evict) {
@@ -20,7 +14,7 @@
                 V oldValue = e.value;
                 if (!onlyIfAbsent || oldValue == null)
                     e.value = value;
-                /*这个方法，HashMap是空实现的，留给 LinkedHashMap */    
+                /*这个方法, HashMap是空实现的, 留给 LinkedHashMap */    
                 afterNodeAccess(e);
                 return oldValue;
             }
@@ -28,20 +22,21 @@
         ++modCount;
         if (++size > threshold)
             resize();
-        /*这个方法，HashMap是空实现的，留给 LinkedHashMap */    
+        /*这个方法, HashMap是空实现的, 留给 LinkedHashMap */    
         afterNodeInsertion(evict);
         return null;
     }
 
 ```
 
-> afterNodeAccess 方法的解释
 
+### afterNodeAccess#方法解释
 ```
 void afterNodeAccess(Node<K,V> e) { // move node to last
     LinkedHashMap.Entry<K,V> last;
-    /* 如果 accessOrder 为false， 什么都不做，LinkedHashMap默认 为false；
-     * 既然默认什么都不做，怎么就能实现 存取有序呢？参见下文【存入时，关联双向链表】
+    /* 如果 accessOrder 为 false,  什么都不做, LinkedHashMap默认 为 false;
+     * 既然默认什么都不做, 怎么就能实现 存取有序呢？参见下文【存入时, 关联双向链表】
+     * 这里是 
      * */
     if (accessOrder && (last = tail) != e) {
         LinkedHashMap.Entry<K,V> p =
@@ -67,7 +62,7 @@ void afterNodeAccess(Node<K,V> e) { // move node to last
 }
 ```
 
-> 存入时，关联双向链表
+> 存入时, 关联双向链表
 
 在看 HashMap 的 putVal 操作；  
 
@@ -118,7 +113,7 @@ private void linkNodeLast(LinkedHashMap.Entry<K,V> p) {
 }
 ```
 ##### 3. 迭代 entrySet   
-只干了一件事，之前顺序存入双向链表的，head ->.tail 取出来，就可以了 
+只干了一件事, 之前顺序存入双向链表的, head ->.tail 取出来, 就可以了 
 ```
 public void forEach(BiConsumer<? super K, ? super V> action) {
     if (action == null)

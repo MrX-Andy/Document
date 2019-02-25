@@ -1,5 +1,6 @@
 自定义控件相关 基础知识   
 
+
 ### onLayout layout  
 继承 View, 可以重写 onLayout 和 layout;  
 继承 ViewGroup, 只可以重写 onLayout, layout 方法是 final 类型的,  不可以重写;  
@@ -128,4 +129,5 @@ https://blog.csdn.net/jewleo/article/details/39547631
 Android 屏幕刷新机制  
 https://www.jianshu.com/p/0d00cb85fdf3   
 
-
+touchDelegate  
+https://www.jianshu.com/p/cb5181418c7a  

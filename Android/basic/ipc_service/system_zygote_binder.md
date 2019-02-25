@@ -315,7 +315,7 @@ com.android.server.SystemServiceManager
 是一个工具, 通过 SystemServiceManager 可以 startService;  
 SystemServiceManager.startService 启动的服务, 是 SystemService 的子类;  
 
-ActivityManagerService 继承于 IActivityManager.Stub,   
+ActivityManagerService 继承于 IActivityManager.Stub, 驻留在 system_server 进程;  
 PowerManagerService 继承于 SystemService  
 
 com.android.server.SystemService  

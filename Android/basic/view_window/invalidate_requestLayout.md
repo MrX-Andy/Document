@@ -169,6 +169,8 @@ android.view.WindowManager
 android.view.WindowManagerGlobal  
 android.view.WindowManagerImpl  
 com.android.server.wm.WindowManagerService  
+com.android.internal.view.SurfaceFlingerVsyncChoreographer  
+android.view.Choreographer  
 
 
 ### ViewRootImpl#performTraversals  
