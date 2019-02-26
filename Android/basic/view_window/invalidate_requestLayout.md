@@ -1474,5 +1474,6 @@ https://blog.csdn.net/feiduclear_up/article/details/46772477
 https://blog.csdn.net/iispring/article/details/49203945  
 深入理解Android卷3-第6章-深入理解控件系统(邓凡平)   
 
-https://www.jianshu.com/p/733c7e9fb284(Alex_Cin 留言, 记得删掉)  
 
+measure 流程  
+https://www.jianshu.com/p/1dab927b2f36  
