@@ -15,3 +15,18 @@ LinkedHashMap 中维护一个双向链表, 并维护 head 和 tail 指针, lruCa
 更多 LinkedHashMap 的知识  
 [链接](/Java/basic/collection/LinkedHashMap.md)  
 
+### 参考 
+缓存淘汰算法--LRU算法  
+http://flychao88.iteye.com/blog/1977653  
+
+LRU缓存实现(Java)  
+https://www.cnblogs.com/lzrabbit/p/3734850.html  
+
+缓存策略之LRU实现(基于双链表实现)  
+http://gogole.iteye.com/blog/692103 
+
+Linux c 开发 - Memcached源码分析之LRU算法（6）   
+https://www.lvtao.net/c/628.html  
+
+基于LinkedHashMap实现LRU缓存调度算法原理及应用  
+http://woming66.iteye.com/blog/1284326  

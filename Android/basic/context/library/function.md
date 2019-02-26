@@ -331,3 +331,6 @@ setRequestedOrientation(isPortrait() ?
 ActivityInfo.SCREEN_ORIENTATION_PORTRAIT : ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 ```
 
+### 参考  
+activity-alias  
+https://yrom.net/blog/2012/10/20/activity-enabled-at-platform-specific-version/  

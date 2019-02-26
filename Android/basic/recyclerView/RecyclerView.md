@@ -1,5 +1,3 @@
-### RecyclerView
-
 [自定义LayoutManager](library/layoutmanager.md)   
 [对源码的认识](library/recycler_source.md)   
 
@@ -35,6 +33,7 @@ public void closeItemAnimator() {
 }
 ```  
 ### 参考  
+http://www.cnblogs.com/dasusu/p/7746946.html  
 ListView 与 RecyclerView 简单对比  
 https://blog.csdn.net/shu_lance/article/details/79566189  
 

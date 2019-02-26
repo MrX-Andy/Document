@@ -1,30 +1,77 @@
-### java 集合框架
+[Collection 系列图](basic/collection/ImageFiles/Collection_001.png)  
+[Map系列图](basic/collection/ImageFiles/Collection_002.png)  
+[Collection 汇总图](basic/collection/ImageFiles/Collection_003.jpg)  
 
-[Collection系列图](basic/collection/ImageFiles/Collection_001.png)、 [Map系列图](basic/collection/ImageFiles/Collection_002.png)  
-[Collection汇总图](basic/collection/ImageFiles/Collection_003.jpg)  
-
-◆ 简单描述 
-◑ Map<K, V>    
-Java中存储键值对的数据类型都实现了这个接口，表示“映射表”;  
-支持的两个核心操作是get(Object key)以及put(K key, V value);  
+简单描述  
+Map<K, V>  
+Java 中存储键值对的数据类型都实现了这个接口, 表示"映射表";  
+支持的两个核心操作是 get(Object key) 以及 put(K key, V value);  
 分别用来获取键对应的值以及向映射表中插入键值对;  
-◑ Set<E>  
-无序、不可重复的集合；查询效率低，删除和插入效率高；     
-◑ List<E>  
-有序、可以重复的集合；查询效率高，删除和插入效率低；      
-◑ Queue<E>  
-Java集合框架中的队列接口，代表了“先进先出”队列。支持add(E element), remove()等操作。
-◑ Stack<E>  
-Java集合框架中表示堆栈的数据类型，堆栈是一种“后进先出”的数据结构。支持push(E item), pop()等操作。
 
-[用法比较](basic/collection/Library/compare_list_map_set.md)、  
+Set<E>  
+无序, 不可重复的集合, 查询效率低, 删除和插入效率高;  
 
-◆ 学习集合框架源码  
-[ArrayList](basic/collection/Library/List_ArrayList.md)    
-[LinkedList](basic/collection/Library/List_LinkedList.md)      
-[HashMap](basic/collection/HashMap.md)    
+List<E>  
+有序, 可以重复的集合, 查询效率高, 删除和插入效率低;  
+
+Queue<E>  
+Java集合框架中的队列接口, 代表了"先进先出"队列, 支持add(E element), remove()等操作;
+
+Stack<E>  
+Java集合框架中表示堆栈的数据类型, 堆栈是一种"后进先出"的数据结构, 支持 push(E item), pop()等操作;  
+### 集合框架的用法比较  
+Tree 不允许 key为空;  
+Concurrent 涉及 key, key不允许为空; 涉及value, value不允许为空;  
+
+HashMap  
+键值对, 一组key, value元素;  
+key, value 都可以为空(允许多个不同的key, value为空);  
+key相同, value会被覆盖;  
+迭代时, 按照key的hashCode顺序;  
+
+Hashtable
+键值对, 一组key, value元素;  
+key 和 value, 均不可以为空( hashtable.put(null,"AA");     hashtable.put("AA",null);  都会抛异常);    
+
+TreeMap  
+键值对, 一组key, value元素;  
+只允许value为空(treeMap.put(null, "AA"); 会抛异常);  
+迭代时, 按照key的自然语言升序;  
+
+LinkedHashMap  
+键值对, 一组key, value元素;  
+key, value 都可以为空(允许多个不同的key, value为空;);  
+key相同, value会被覆盖;  
+迭代时, 可以按照存入时的顺序, 也可以按照LRU算法;  
+
+HashSet
+不是键值对, 只有一个元素;  
+允许放入 null;  
+放入重复元素, 会被覆盖;  
+迭代时, 按照hashCode顺序;  
+
+LinkedHashSet  
+不是键值对, 只有一个元素;  
+允许放入 null;  
+放入重复元素, 会被覆盖;  
+迭代时, 按照存入的顺序;  
+
+TreeSet  
+不是键值对, 只有一个元素;  
+不能放入 null(treeSet.add(null); 会抛异常);  
+迭代时, 按照自然语言升序;  
+
+ConcurrentHashMap
+键值对, 一组key, value元素;  
+key 和 value, 均不可以为空( concurrentHashMap.put(null,"AA");     concurrentHashMap.put("AA",null);  都会抛异常);  
+
+
+### 集合框架源码  
+[ArrayList](basic/collection/Library/ArrayList.md)  
+[LinkedList](basic/collection/Library/LinkedList.md)  
+[HashMap](basic/collection/HashMap.md)  
 [LinkedHashMap](basic/collection/LinkedHashMap.md)    
-[TreeMap](basic/collection/Library/Map_TreeMap.md)    
+[TreeMap](basic/collection/Library/TreeMap.md)    
 LinkedTreeMap  
 LinkedHashTreeMap  
 [ConcurrentHashMap](basic/collection/ConcurrentHashMap.md)  
@@ -32,18 +79,18 @@ ConcurrentSkipListMap
 IdentityHashMap  
 WeakHashMap  
 WeakClassHashMap  
-  
+[LruCache](basic/collection/lrucache.md)  
 
 Hashtable  
 IdentityHashtable  
 
 TreeSet  
-//RegularEnumSet  
-//JumboEnumSet  
+//  RegularEnumSet  
+//  JumboEnumSet  
 HashSet  
 LinkedHashSet  
-◑ CopyOnWriteArrayList  
-很适合处理处理，读取频繁，但很少有写操作；  
+CopyOnWriteArrayList  
+很适合处理处理，读取频繁，但很少有写操作;  
 CopyOnWriteArraySet  
 ConcurrentSkipListSet  
 BitSet  

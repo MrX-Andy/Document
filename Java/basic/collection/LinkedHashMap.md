@@ -45,13 +45,8 @@ accessOrder = false  输出:
 #lambda 4=D
 #lambda 5=E
 ```
-forEach 的输出, 按照插入顺序;  
-[链接](LinkedHashMap/LHM_AccessOrderByPut.md)  
 
-forEach 的输出, 按照插入顺序;  
-[链接](LinkedHashMap/LHM_AccessOrderByLRU.md)  
-
-我们看一下put操作
+我们看一下put操作  
 1.. LinkedHashMap 只能调用父类 HashMap 的 public V put(K key, V value);  
 2.. final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict);   
 putValue 是 final 类型的方法, 无法重写;  
