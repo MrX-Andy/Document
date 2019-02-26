@@ -43,8 +43,9 @@ http://blog.csdn.net/huachao1001
 ♬  ruheng  
 http://lruheng.com/archives/    
 https://github.com/LRH1993/android_interview  
+https://www.jianshu.com/u/0fa6f5d09040  
 
-http://www.cnblogs.com/wangle12138/  
+http://www.cn`blogs.com/wangle12138/  
 http://weishu.me/archives/  
 https://jsonchao.github.io/archives/
 http://gityuan.com/archive/  
@@ -67,6 +68,7 @@ https://github.com/hehonghui/android-tech-frontier
 https://github.com/GcsSloop/AndroidNote  
 https://blog.csdn.net/lin20044140410/article/list/1  
 https://www.cnblogs.com/dasusu/category/1330070.html  
+
 
 
 
