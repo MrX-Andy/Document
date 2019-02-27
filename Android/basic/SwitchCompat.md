@@ -16,7 +16,7 @@
         app:trackTintMode="src_over"/>
 ```
 
-##### simple_switch_thumb_oval  
+### simple_switch_thumb_oval  
 ```
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
@@ -32,7 +32,7 @@
 
 </shape>
 ```
-##### simple_switch_track_rect  
+### simple_switch_track_rect  
 ```
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
@@ -59,7 +59,7 @@
 </selector>
 ```
 
-##### simple_switch_style  
+### simple_switch_style  
 ```
     <style name="simple_switch_style" parent="Theme.AppCompat.Light">
         <!--  开状态， 轨道的颜色-->

@@ -15,7 +15,7 @@
 ### Reflect;  反射机制;  动态代理;  
 Proxy.newProxyInstance 动态代理  
 ```
-Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), new Class[]{ApiService.class}, new InvocationHandler() {
+ApiService apiService = Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), new Class[]{ApiService.class}, new InvocationHandler() {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         return null;
@@ -26,7 +26,6 @@ Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), new Class[]{ApiServic
 这个代理类所有的方法, 在调用之前, 都会先调用 invocationHandler.invoke 方法;  
 所以每次调用代理对象的方法时, 都会触发相应的回调, 这时候能拿到, 代理对象, method 对象, 参数值的列表;  
 [Proxy.newProxyInstance 动态代理接口](basic/reflect/Proxy_newProxyInstance_interface.md)  
-[InvocationHandler.invoke触发机制](basic/reflect/InvocationHandler_invoke.md)  
 
 ### Class.forName 和 ClassLoader  
 class.forName(className, initialize, classLoader);   

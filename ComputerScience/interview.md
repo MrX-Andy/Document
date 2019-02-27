@@ -1,4 +1,13 @@
-thread.wait, message.nativeWait, 怎么实现的 线程挂起;  
+ConcurrentHashMap;  
+公平锁-非公平锁-偏向锁-互斥锁  
+HTTP-三次握手-四次挥手;  
+HTTPS;  超级难  CA证书有什么用;  
+thread 之间通信, 怎么通信;  
+插件化-热更新;  
+性能检测, 页面卡顿检测, 内存泄漏检测, 过度绘制检测;  
+四大组件, 原理;  
+view 测量-绘制原理;  
+
 除了 thread.start, 你还用过哪些 api, 对 join 有了解吗?  
 
 bundle 传值, 大小限制;  
@@ -29,14 +38,14 @@ TreeMap;
 synchronized 实现的原理;  
 ReentrantLock 原理;  
 synchronized与ReentrantLock;  
-LRUCache原理;  
+
 synchronized 与 Lock的区别;  
 为什么要有 工作内存 和 主存;  
 String 为什么要设计成不可变的;  
 泛型, 如果不想 类型擦除, 怎么办;  
-Java集合类图;  
+
 说说你对Java反射的理解; 
-动态代理;   
+
 内部类的作用;  
 Java深拷贝和浅拷贝;  
 Java finally与return执行顺序;  
@@ -49,32 +58,27 @@ Java finally与return执行顺序;
 https://github.com/crossoverJie/Java-Interview  
 
 ###  Android  
-LinearLayout, FrameLayout, RelativeLayout 哪个效率高;  
-onNewIntent 和 生命周期函数, 触发的顺序;  
-fragment, 只是 add, 会触发什么生命周期, show 和 hide 会触发什么生命周期;  
-同一个位置, 先 replace AFragment, 再 replace BFragment, AFragment 会触发什么生命周期;  
+LinearLayout, FrameLayout, RelativeLayout 哪个效率高, 为什么;  
+
 
 横竖屏切换, 会触发 Activity 什么生命周期;  
 
 图片编解码, BitmapFactory.createBitmap 的时候, 就会涉及编解码;  
 LinearLayout 包裹 A, B 两个 Button, 在 AButton 上按下, 一直移动, 手指扫过 BButton, 整个事件传递的过程, MoveEvent 的数值;  
 
-Intent 传值注意什么, 有什么限制, 为什么要用 bundle;  
 如果是在 Thread 里面用 handler, 怎么初始化;  
-Android 事件分发, 点击事件怎么分发的;  
-onTouchEvent 返回 true , false, super.onTouchEvent 有什么不同;  
-MessageQueue 底层的数据结构, 是链表;  
-intent 传值, 需要注意哪些;  
-Parcelable 为什么要保持读写顺序一致;  
-intent 传数据的机制,  为什么 要用 bundle;  
-数据量小, 适用移动端, 还有就是安全性;  
-invalidate  requestLayout;  
-属性动画 和 补间动画 原理上的区别;  
-Jvm、Dalvik、Art和对比;  
-App启动流程, 从点击桌面开始;  
-Application 的 Context 和 Activity 的 Context;  
 
-横竖屏切换的时候, Activity 各种情况下的生命周期;  
+intent 传值, 需要注意哪些;  
+
+Parcelable 为什么要保持读写顺序一致;  
+
+Intent 传值注意什么, 有什么限制, 为什么要用 bundle;  
+数据量小, 适用移动端, 还有就是安全性;  
+
+
+Jvm、Dalvik、Art和对比;  
+
+Application 的 Context 和 Activity 的 Context;  
 
 Service 的生命周期;  
 BroadcastReceiver;  
@@ -90,7 +94,6 @@ ListView 采用的是 RecyclerBin 的回收机制在一些轻量级的 item 显�
 https://www.jianshu.com/p/82d18b0d18f4  
 AlertDialog, popupWindow, 在 Activity 中的区别;  
 
-Serializable 和Parcelable 的区别;  
 
 ArrayMap<Int, Int>  
 SparseArray<Int>  
@@ -102,7 +105,6 @@ LongSparseArray<Int>
 多线程断点续传原理;  
 
 EventBus;  
-图片加载原理;  
 Https请求慢的解决办法, DNS, 携带数据, 直接访问IP;  
 
 热修复;  

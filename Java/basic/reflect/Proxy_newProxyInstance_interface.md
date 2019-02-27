@@ -1,7 +1,5 @@
-### Proxy.newProxyInstance  动态代理接口
-
+### Proxy.newProxyInstance#动态代理接口  
 假设为一个接口做动态代理, 因为接口是比较特殊的, 没有构造方法;  
-
 ```
 public interface ApiService {
     public static final String BASE_URL = "https://";
@@ -186,3 +184,83 @@ public static byte[] generateProxyClass(final String var0, Class<?>[] var1, int 
 ```
 ❀ Proxy.defineClass0  
 private static native Class<?> defineClass0(ClassLoader loader, String name,byte[] b, int off, int len);  
+
+### InvocationHandler.invoke#触发机制   
+❀ Proxy.newProxyInstance  
+```
+public static Object newProxyInstance(ClassLoader loader,Class<?>[] interfaces,InvocationHandler h) throws IllegalArgumentException{
+    Objects.requireNonNull(h);
+    // 这里会生成 代理类  
+    Class<?> cl = getProxyClass0(loader, intfs);
+    ... 
+    try {
+        final Constructor<?> cons = cl.getConstructor(constructorParams);
+        ...
+        // InvocationHandler 对象，在这里被用到， 断点进去  
+        return cons.newInstance(new Object[]{h});
+    } catch (IllegalAccessException|InstantiationException e) {
+        throw new InternalError(e.toString(), e);
+    } 
+}
+```
+❀ Constructor.newInstance  
+```
+public T newInstance(Object ... initargs) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    ... 
+    ConstructorAccessor ca = constructorAccessor;   // read volatile
+    if (ca == null) {
+        // 这里 可以 看到 ca 就是 NativeConstructorAccessorImpl  
+        ca = acquireConstructorAccessor();
+    }
+    // InvocationHandler 对象，在这里被用到， 断点进去  
+    T inst = (T) ca.newInstance(initargs);
+    return inst;
+}
+```
+❀ sun.reflect.NativeConstructorAccessorImpl.newInstance  
+```
+public Object newInstance(Object[] var1) throws InstantiationException, IllegalArgumentException, InvocationTargetException {
+    if (++this.numInvocations > ReflectionFactory.inflationThreshold() && !ReflectUtil.isVMAnonymousClass(this.c.getDeclaringClass())) {
+        ConstructorAccessorImpl var2 = (ConstructorAccessorImpl)(new MethodAccessorGenerator()).generateConstructor(this.c.getDeclaringClass(), this.c.getParameterTypes(), this.c.getExceptionTypes(), this.c.getModifiers());
+        this.parent.setDelegate(var2);
+    }
+
+    // InvocationHandler 对象，在这里被用到，
+    return newInstance0(this.c, var1);
+}
+```
+❀ private static native Object newInstance0(Constructor<?> var0, Object[] var1)  
+
+### 为什么只能代理接口   
+ProxyGenerator#generateConstructor  
+```
+private ProxyGenerator.MethodInfo generateConstructor() throws IOException {
+    ProxyGenerator.MethodInfo var1 = new ProxyGenerator.MethodInfo("<init>", "(Ljava/lang/reflect/InvocationHandler;)V", 1);
+    DataOutputStream var2 = new DataOutputStream(var1.code);
+    this.code_aload(0, var2);
+    this.code_aload(1, var2);
+    var2.writeByte(183);
+    var2.writeShort(this.cp.getMethodRef("java/lang/reflect/Proxy", "<init>", "(Ljava/lang/reflect/InvocationHandler;)V"));
+    var2.writeByte(177);
+    var1.maxStack = 10;
+    var1.maxLocals = 2;
+    var1.declaredExceptions = new short[0];
+    return var1;
+}
+```
+生成的代理类  
+```
+public final class $Proxy0 extends Proxy implements tagService{  
+  private static Method m1;  
+  private static Method m3;  
+  private static Method m0;  
+  private static Method m2;  
+  public $Proxy0(InvocationHandler paramInvocationHandler) {  
+     super(paramInvocationHandler);  
+   }  
+}
+```
+
+意思是, 动态代理生成的代理类, 默认继承于 Proxy 类, 因为 java 不支持多继承, 所以多态就用接口实现;  
+为什么要继承于 Proxy, 因为需要使用其内部的 invocationHandler 属性;  
+动态代理, 更多是对行为的代理, 而不是对属性和代码块的代理;  

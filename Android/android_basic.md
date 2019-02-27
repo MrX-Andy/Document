@@ -26,13 +26,15 @@ Activity;  Fragment;  Context;  Application;
 [链接](basic/optimize_stability_lowPower.md)  
 
 [插件化](basic/Plugin.md)  
-[常见问题](basic/bug/bug.md)  
+[常见问题](basic/librray/bug.md)  
 [tools 命名空间](basic/tools.md)  
 
 共享存储;  SharePreference; SP;  
 [链接](basic/sharePreference.md)  
 
-[数据结构](basic/collection/collection.md)  
+SparseArray-ArrayMap  
+[ArrayMap](basic/librray/ArrayMap.md)  
+
 MVVM;  DataBinding;  LiveData;  
 [链接](basic/databinding/databinding.md)   
 
