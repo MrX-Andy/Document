@@ -2,7 +2,8 @@
 一是进程的入口函数是 ActivityThread.main,   
 二是进程天然支持 Binder 进程间通信机制;  
 
-### init#进程  
+### 系统进程的具体描述  
+#### init#进程  
 当按下电源键   
 cpu 上电, 芯片上的预设代码开始执行, 加载引导程序 Bootloader 到 ram 中运行;  
 Bootloader 负责初始化硬件资源和加载 linux kernel, 然后将控制权交给 linux kernel;    
@@ -15,35 +16,68 @@ fork init 进程, init 进程会启动 ServiceManager 和 android 的 Zygote 进
 启动 ServiceManager 为 BinderDevice 注册上下文管理者;   
 ![安卓进程模型图](../context/ImageFiles/launcher_001.png)  
 
-### zygote#进程  
+
+#### ServiceManager  
+ServiceManager 对应 service_manager.c文件;  
+init 进程 fork ServiceManager 进程, ServiceManager 是 0号 binder 实体, 负责注册和管理 binder;  
+ServiceManager 进程, 做了哪些事情:  
+1.. 调用 binder_open()函数, 打开 binder 驱动, 并调用 mmap()方法分配 128k 的内存映射空间;  
+2.. 调用 binder_become_context_manager()函数, 通知 binder 驱动, 使其成为守护进程, 并成为 binder 的上下文管理者;  
+3.. 验证 seLinux 权限, 判断进程是否有权注册, 或者查看指定服务;  
+4.. 调用 binder_loop()函数, 进入循环体, 等待 Client 端的请求, 并调用 binder_parser 来解析-处理消息, 进入循环体之后, 永远不会退出, 除非发生致命错误;  
+5.. 一旦 ServiceManager 发生重启, zygote, media, surfaceFlinger 等都会被重新加载;  
+注册服务的过程, 根据服务名称, 但同一个服务已注册, 重新注册前会先移除之前的注册信息;  
+死亡通知: 当 binder 所在进程死亡后,会调用 binder_release 方法,然后调用 binder_node_release, 这个过程便会发出死亡通知的回调;  
+
+❀ ServiceManager 的功能  
+1.. 注册  
+当创建 Binder Server 就要向 ServiceManager 注册;  
+
+2.. 查询  
+应用程序可以向 ServiceManager 发起请求, 获取某个 Binder Server 的句柄;  
+
+3.. 其他信息查询  
+诸如 ServiceManager 的版本号, 当前状态等;  
+
+❀ Client 获得实名 Binder 的引用  
+Server 向 SMgr 注册了 Binder 实体及其名字后, Client 就可以通过名字获得该 Binder的引用了;  
+从面向对象的角度, 这个 Binder 对象现在有了两个引用: 一个位于 SMgr 中, 一个位于发起请求的 Client 中;  
+如果接下来有更多的 Client 请求该 Binder, 系统中就会有更多的引用指向该 Binder, 就象 java 里一个对象存在多个引用一样;   
+
+❀ 匿名 Binder  
+并不是所有 Binder 都需要向 SMgr 注册的;  
+Server 端可以通过, 已经建立的 Binder 连接, 完成通信, 将创建的 Binder 实体传给 Client, 当然这条已经建立的 Binder 连接必须是通过实名 Binder 实现;  
+由于这个 Binder 没有向 SMgr注册名字, 所以是个匿名 Binder;  
+Client 将会收到这个匿名 Binder 的引用, 通过这个引用向位于 Server 中的实体发送请求;  
+匿名 Binder 为通信双方建立一条私密通道, 只要 Server 没有把匿名 Binder 发给别的进程,  别的进程就无法获得该 Binder 的引用, 向该 Binder 发送请求;   
+
+#### zygote#进程  
 Android 是基于 Linux 系统的, 当手机开机的时候, Linux 的内核加载完成之后, 就会启动一个 "init" 的进程;   
 在 Linux 系统中, 所有的进程都是由 init 进程 fork 出来的, zygote 进程也不例外;  
 在 Android 系统中, 所有的应用程序进程以及系统服务进程 SystemServer, 都是由 Zygote 进程 fork 出来的, 都是 zygote 的子进程;  
 
-Zygote 进程共做了如下几件事:   
-解析 init.zygote.rc 中的参数, 创建 AppRuntime 并调用 AppRuntime.start()方法;  
-调用 AndroidRuntime 的 startVM()方法创建虚拟机, 再调用 startReg()注册 JNI 函数;     
-通过 JNI 方式调用 ZygoteInit.main(), 第一次进入 Java 世界;  
-registerZygoteSocket()建立 socket 通道, 作为 IPC 通信服务端, zygote 作为通信的服务端, 用于响应客户端请求;   
-通过 registerZygoteSocket 函数创建服务端 Socket, 并通过 runSelectLoop 函数等待 ActivityManagerService 的请求来创建新的应用程序进程;  
-启动 SystemServer 进程;  
-执行 preloadClasses  和 preloadResource 函数, 分别是加载 class 文件到内存, 和加载资源文件到内存, 这个过程是很耗时间的, 所以开机会比较慢;   
-preload()预加载通用类, drawable 和 color 资源, openGL 以及共享库以及 WebView, 用于提高 app 启动效率;  
+Zygote 进程, 做了哪些事情:   
+1.. 解析 init.zygote.rc 中的参数, 创建 AppRuntime 并调用 AppRuntime.start()方法;  
+2.. 调用 AndroidRuntime 的 startVM()方法创建虚拟机, 再调用 startReg()注册 JNI 函数;     
+3.. 通过 JNI 方式调用 ZygoteInit.main(), 第一次进入 Java 世界;  
+4.. registerZygoteSocket()建立 socket 通道, 作为 IPC 通信服务端, zygote 作为通信的服务端, 用于响应客户端请求;   
+5.. 通过 registerZygoteSocket 函数创建服务端 Socket, 并通过 runSelectLoop 函数等待 ActivityManagerService 的请求来创建新的应用程序进程;  
+6.. fork SystemServer 进程;  
+7.. 执行 preloadClasses  和 preloadResource 函数, 分别是加载 class 文件到内存, 和加载资源文件到内存, 这个过程是很耗时间的, 所以开机会比较慢;   
+    preload()预加载通用类, drawable 和 color 资源, openGL 以及共享库以及 WebView, 用于提高 app 启动效率;  
 
-### SystemServer#进程  
-在  ZygoteInit.main()方法里 调用 fork SystemServer 方法 fork 了 SystemServer;  
-系统里面重要的服务都是在这个进程里面开启的, 比如:   
-ActivityManagerService, PackageManagerService, WindowManagerService, DisplayManagerService 等等;  
-最后调用Looper.loop(); 进行消息循环, 后续会处理相关消息;  
+#### SystemServer#进程  
+在  ZygoteInit.main()方法里 调用 forkSystemServer()方法 fork 了 SystemServer 进程;  
+进程描述: className="com.android.server.SystemServer", 进程名字="system_server";  
+SystemServer 进程, 做了哪些事情:  
+1.. 启动 Binder 线程池, 这样就可以与其他进程进行通信;   
+2.. 创建 SystemServiceManager 用于对系统的服务进行创建, 启动和生命周期管理;  
+3.. 启动各种系统服务, 比如, ActivityManagerService, PackageManagerService, WindowManagerService, DisplayManagerService 等等, 他们(这几个Service)都工作在 SystemServer 进程;  
+4.. 最后调用Looper.loop(); 进行消息循环, 后续会处理相关消息;  
 
-SystemServer 在启动时做了如下工作:   
-启动 Binder 线程池, 这样就可以与其他进程进行通信;   
-创建 SystemServiceManager 用于对系统的服务进行创建, 启动和生命周期管理;  
-启动各种系统服务;  
-
-### ActivityManagerService  
+#### ActivityManagerService  
 SystemServer 进程 #run 方法 ⤑ #startBootstrapServices 方法 ⤑  启动 ActivityManagerService;  
-在 SystemService.java 的run方法, ActivityManagerService 向 Native 的 ServiceManager 注册服务;  
+在 SystemServer.java 的 run方法, ActivityManagerService 向 Native 的 ServiceManager 注册服务;  
 ActivityManagerService 是服务端对象, 负责系统中所有 Activity 的生命周期;  
 创建 ActivityManager, ProcessRecord, ServiceManager;  
 start 方法中, 反射调用 ActivityThread.main方法;  
@@ -61,18 +95,8 @@ AMN 又实现了Binder类, 这样AMP可以和AMS就可以通过Binder来进行�
 ActivityManager 通过 AMN 的 getDefault 方法得到 AMP, 通过 AMP 就可以和 AMN 进行通信, 也就是间接的与 AMS 进行通信;  
 除了 ActivityManager, 其他想要与 AMS 进行通信的类都需要通过AMP;  
 
-### 进程流程  
-App 与 ActivityManagerService 通过 Binder 进行 IPC 通信, ActivityManagerService (SystemServer进程) 与 Zygote 通过 Socket 进行 IPC 通信;  
-内核启动, init 进程 fork Zygote 进程, Zygote 进程 fork SystemServer 进程,  SystemServer fork ActivityManagerService 进程;  
-init进程	Init.main()  
-zygote进程	ZygoteInit.main()  
-app_process进程	RuntimeInit.main()  
-system_server进程	SystemServer.main()  
-app进程	ActivityThread.main()  
-
-### 点击Launcher中, App的图标后, 发生了什么  
-[LauncherActivity](../context/launcher/launcher_activity.md)  
-点击桌面 App 图标, Launcher 进程采用 Binder IPC向 system_server 进程发起 startActivity 请求;  
+#### 在 Launcher 中点击  App 的图标后, 发生了什么  
+点击桌面 App 图标, Launcher-App 进程采用 Binder IPC向 system_server 进程发起 startActivity 请求;  
 system_server 进程接收到请求后, 向 zygote 进程发送创建进程的请求;  
 Zygote 进程 fork 出新的子进程, 即 App 进程;  
 App 进程, 通过 Binder IPC 向 system_server 进程发起 attachApplication 请求;  
@@ -82,32 +106,16 @@ App 进程的 binder 线程 (ApplicationThread) 在收到请求后, 通过 handl
 到此, App 便正式启动, 开始进入 Activity 生命周期, 执行完 onCreate/onStart/onResume方法, UI 渲染结束后便可以看到 App 的主界面;  
 
 
-### 安卓常用的进程间通信    
+
+### 为什么是#binder  
 1.. Activity, BroadcastReceiver, ContentProvider, Service, Messenger, AIDL (这几种, 底层全是 binder 机制);  
 2.. socket 方式;  
 3.. 基于文件共享的方式;  
 
-传统的IPC机制, 只能适用于父子, 兄弟之间的亲属关系的进程之间通信, 有:  
+传统的 IPC 机制, 只能适用于父子, 兄弟之间的亲属关系的进程之间通信, 有:  
 管道 (Pipe), 信号 (Signal), 跟踪 (Trace);    
 后来新增:  命名管道 (Named Pipe), 报文队列 (Message), 共享内存 (Share Memory), 信号量 (Semaphore), 套接字 (Socket);  
 
-### 管道  
-简单来说, 管道就是一个文件  
-在管道的两端, 分别是两个打开文件的, 文件描述符, 这两个打开文件描述符, 都是对应同一个文件, 其中一个是用来读的, 别一个是用来写的;  
-一般的使用方式就是, 一个线程通过读文件描述符, 来读管道的内容, 当管道没有内容时, 这个线程就会进入等待状态,   
-而另外一个线程, 通过写文件描述符, 来向管道中写入内容, 写入内容的时候, 如果另一端正有线程, 正在等待管道中的内容, 那么这个线程就会被唤醒;  
-这个等待和唤醒的操作是如何进行的呢, 这就要借助 Linux 系统中的 epoll 机制了, Linux 系统中的 epoll 机制为处理大批量句柄而作了改进的 poll,   
-是 Linux 下多路复用 IO 接口 select/poll 的增强版本, 它能显著减少程序, 在大量并发连接中, 只有少量活跃的情况下的系统 CPU 利用率;  
-```
-(01) pipe(wakeFds), 该函数创建了两个管道句柄;  
-(02) mWakeReadPipeFd=wakeFds[0], 是读管道的句柄;   
-(03) mWakeWritePipeFd=wakeFds[1], 是写管道的句柄;   
-(04) epoll_create(EPOLL_SIZE_HINT), 是创建epoll句柄;  
-(05) epoll_ctl(mEpollFd, EPOLL_CTL_ADD, mWakeReadPipeFd, & eventItem), 它的作用是告诉 mEpollFd, 它要监控 mWakeReadPipeFd 文件描述符的 EPOLLIN 事件,   
-```
-即当管道中有内容可读时, 就唤醒当前正在等待管道中的内容的线程;  
-
-### 为什么是 binder  
 ❀ 性能考虑  
 1.. socket  
 socket 作为一个通用接口, 传输效率低, 开销大, 主要用在跨网络的进程间通信, 和本机上的低速通信;   
@@ -133,8 +141,8 @@ Android 为每个安装好的应用程序分配了自己的 UID, 故进程的 UI
 ❀ 结论  
 并不是 Linux 现有的 IPC 机制不够好, 每种 Linux 的 IPC 机制都有存在的价值, 同时在 Android 系统中也依然采用了大量 Linux 现有的 IPC 机制,    
 根据每类 IPC 的原理特性, 因时制宜, 不同场景特性往往会采用其下最适宜的;  
-比如在 Android OS 中的 Zygote 进程的 IPC 采用的是Socket(套接字)机制, Android 中的 Kill Process 采用的 signal(信号)机制等等;  
-而 Binder 更多则用在 system_server 进程与 App 层的IPC交互;  
+比如在 Android OS 中的 Zygote 进程的 IPC 采用的是 Socket 机制, Android 中的 Kill Process 采用的 signal 机制等等;  
+而 Binder 更多则用在 system_server 进程与 App 层的 IPC 交互;  
 基于以上原因, Android 建立一套新的IPC机制来满足系统对通信方式, 传输性能和安全性的要求, 采用基于 OpenBinder 实现的 Binder 通信机制;  
 Binder 基于 Client-Server 通信模式, 传输过程只需一次拷贝, 为发送发添加UID/PID身份, 既支持实名 Binder 也支持匿名 Binder, 安全性高;  
 
@@ -170,42 +178,6 @@ binder_ioctl
 BINDER_WRITE_READ   读写操作;  
 BINDER_SET_MAX_THREADS   设置最大线程数;  
 BINDER_SET_CONTEXT_MGR   ServiceManager 专用, 变成上下文管理者;  
-
-### ServiceManager  
-ServiceManager 对应 service_manager.c文件;  
-在 init 进程中 fork ServiceManager 进程, 一旦 ServiceManager 发生重启, Zygote, media, surfaceflinger 等都会被重新加载;  
-在 service_manager.c 的 main 函数, 调用 binder_become_context_manager 函数, 将自己设置为 binder 的上下文管理者, 之后进入循环, 等待客户端的请求;  
-binder_loop 调用 binder_parser 来解析-处理消息, 进入循环体之后, 永远不会退出循环, 除非发生致命错误;  
-
-❀ ServiceManager 启动流程   
-调用 binder_open()函数, 打开 binder 驱动, 并调用 mmap()方法分配 128k 的内存映射空间;  
-调用 binder_become_context_manager()函数, 通知 binder 驱动, 使其成为守护进程;  
-验证 seLinux 权限, 判断进程是否有权注册, 或者查看指定服务;  
-调用 binder_loop()函数, 进入循环体, 等待 Client 端的请求;  
-注册服务的过程, 根据服务名称, 但同一个服务已注册, 重新注册前会先移除之前的注册信息;  
-死亡通知: 当 binder 所在进程死亡后,会调用 binder_release 方法,然后调用 binder_node_release, 这个过程便会发出死亡通知的回调;  
-
-❀ ServiceManager 的功能  
-1.. 注册  
-当创建 Binder Server 就要向 ServiceManager 注册;  
-
-2.. 查询  
-应用程序可以向 ServiceManager 发起请求, 获取某个 Binder Server 的句柄;  
-
-3.. 其他信息查询  
-诸如 ServiceManager 的版本号, 当前状态等;  
-
-❀ Client 获得实名 Binder 的引用  
-Server 向 SMgr 注册了 Binder 实体及其名字后, Client 就可以通过名字获得该 Binder的引用了;  
-从面向对象的角度, 这个 Binder 对象现在有了两个引用: 一个位于 SMgr 中, 一个位于发起请求的 Client 中;  
-如果接下来有更多的 Client 请求该 Binder, 系统中就会有更多的引用指向该 Binder, 就象 java 里一个对象存在多个引用一样;   
-
-❀ 匿名 Binder  
-并不是所有 Binder 都需要向 SMgr 注册的;  
-Server 端可以通过, 已经建立的 Binder 连接, 完成通信, 将创建的 Binder 实体传给 Client, 当然这条已经建立的 Binder 连接必须是通过实名 Binder 实现;  
-由于这个 Binder 没有向 SMgr注册名字, 所以是个匿名 Binder;  
-Client 将会收到这个匿名 Binder 的引用, 通过这个引用向位于 Server 中的实体发送请求;  
-匿名 Binder 为通信双方建立一条私密通道, 只要 Server 没有把匿名 Binder 发给别的进程,  别的进程就无法获得该 Binder 的引用, 向该 Binder 发送请求;   
 
 ### Binder#协议  
 Binder 协议基本格式是(命令+数据), 使用 ioctl(fd, cmd, arg)函数实现交互;  
@@ -300,9 +272,8 @@ Client 调用远程服务, 远程服务收到 Client 请求之后, 会和 Binder
 因为远程服务中有 Server 的 Binder 引用信息, 因此驱动就能轻易的找到对应的 Server, 进而将Client 的请求内容发送 Server;  
 
 ### 各个类的作用  
-init 进程 fork ServiceManager 进程, ServiceManager 是 0号 binder 实体, 负责注册和管理 binder;  
-init 进程 fork zygote 进程;  
-zygote 进程 fork system_server 进程, className="com.android.server.SystemServer", 进程名字="system_server";  
+
+
 
 android.app.IActivityManager  
 android.app.IApplicationThread  
@@ -405,7 +376,7 @@ ActivityManager
 https://developer.android.com/guide/components/bound-services?utm_campaign=adp_series_processes_012016&utm_source=medium&utm_medium=blog  
 
 
-### binder参考  
+### 参考#binder  
 https://blog.csdn.net/u011240877/article/details/72801425  
 http://wangkuiwu.github.io/2014/09/01/Binder-Introduce/  
 http://blog.csdn.net/universus/article/details/6211589  
@@ -458,7 +429,7 @@ https://blog.csdn.net/codefly/article/details/17058607
 https://blog.csdn.net/desler/article/details/47908017  
 https://blog.csdn.net/freekiteyu/article/details/70082302  
 
-### zygote参考  
+### 参考#zygote  
 https://juejin.im/post/5c3832e66fb9a049e308510b  
 https://github.com/LRH1993/android_interview/blob/master/android/advance/app-launch.md  
 https://github.com/yipianfengye/androidSource/blob/master/14%20activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B.md  
@@ -551,7 +522,6 @@ http://liuwangshu.cn/framework/component/1-activity-start-2.html
 
 
 
-
 ### 名词解释  
 MISC    Mobile Information Service Center 移动信息服务中心   
 
@@ -562,3 +532,18 @@ mmap 操作提供了一种机制, 让用户程序能直接访问设备内存, �
 文件被映射到多个页上, 如果文件的大小不是所有页的大小之和, 最后一个页不被使用的空间将会清零, mmap 在用户空间映射调用系统中作用很大;  
 
 
+#### 管道  
+简单来说, 管道就是一个文件  
+在管道的两端, 分别是两个打开文件的, 文件描述符, 这两个打开文件描述符, 都是对应同一个文件, 其中一个是用来读的, 别一个是用来写的;  
+一般的使用方式就是, 一个线程通过读文件描述符, 来读管道的内容, 当管道没有内容时, 这个线程就会进入等待状态,   
+而另外一个线程, 通过写文件描述符, 来向管道中写入内容, 写入内容的时候, 如果另一端正有线程, 正在等待管道中的内容, 那么这个线程就会被唤醒;  
+这个等待和唤醒的操作是如何进行的呢, 这就要借助 Linux 系统中的 epoll 机制了, Linux 系统中的 epoll 机制为处理大批量句柄而作了改进的 poll,   
+是 Linux 下多路复用 IO 接口 select/poll 的增强版本, 它能显著减少程序, 在大量并发连接中, 只有少量活跃的情况下的系统 CPU 利用率;  
+```
+(01) pipe(wakeFds), 该函数创建了两个管道句柄;  
+(02) mWakeReadPipeFd=wakeFds[0], 是读管道的句柄;   
+(03) mWakeWritePipeFd=wakeFds[1], 是写管道的句柄;   
+(04) epoll_create(EPOLL_SIZE_HINT), 是创建epoll句柄;  
+(05) epoll_ctl(mEpollFd, EPOLL_CTL_ADD, mWakeReadPipeFd, & eventItem), 它的作用是告诉 mEpollFd, 它要监控 mWakeReadPipeFd 文件描述符的 EPOLLIN 事件,   
+```
+即当管道中有内容可读时, 就唤醒当前正在等待管道中的内容的线程;  

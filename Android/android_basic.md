@@ -4,7 +4,7 @@ zygote#启动流程;  进程间通信;  IPC;  Binder机制;
 
 [进程, 进程优先级](basic/ipc_service/process.md)  
 
-[startActivity 启动流程](basic/context/launcher/startActivity.md)  
+[startActivity 启动流程](basic/context/library/startActivity.md)  
 
 Activity;  Fragment;  Context;  Application;  
 [链接](basic/context/Activity.md)  
