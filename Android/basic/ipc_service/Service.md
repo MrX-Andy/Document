@@ -319,6 +319,9 @@ if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
 
 
 ### 参考  
+原理  
+https://www.jianshu.com/p/8170b9f1e4af  
+
 全面剖释 Service 服务  
 https://blog.csdn.net/javazejian/article/details/52709857  
 https://www.cnblogs.com/leslies2/p/5401813.html  

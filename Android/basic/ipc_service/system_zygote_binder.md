@@ -3,6 +3,13 @@
 二是进程天然支持 Binder 进程间通信机制;  
 
 ### 系统进程的具体描述  
+init 进程 fork zygote 进程;  
+init 进程 fork service_manager 进程;
+zygote 进程 fork system_server 进程;  
+system_server 进程, 启动 ActivityManagerService, ActivityManagerService 向 native 的 ServiceManager 注册服务;  
+ActivityManagerService 工作在 system_server 进程;  
+App 进程, 通过 binder 机制, 和 ActivityManagerService 进行通信;  
+ActivityManagerService 通过 socket 和 zygote 进程, 进行通信; 
 #### init#进程  
 当按下电源键   
 cpu 上电, 芯片上的预设代码开始执行, 加载引导程序 Bootloader 到 ram 中运行;  
@@ -104,8 +111,6 @@ system_server 进程在收到请求后, 进行一系列准备工作后, 再通�
 App 进程的 binder 线程 (ApplicationThread) 在收到请求后, 通过 handler 向主线程发送 LAUNCH_ACTIVITY 消息;  
 主线程在收到 Message 后, 通过发射机制创建目标 Activity, 并回调 Activity.onCreate()等方法;  
 到此, App 便正式启动, 开始进入 Activity 生命周期, 执行完 onCreate/onStart/onResume方法, UI 渲染结束后便可以看到 App 的主界面;  
-
-
 
 ### 为什么是#binder  
 1.. Activity, BroadcastReceiver, ContentProvider, Service, Messenger, AIDL (这几种, 底层全是 binder 机制);  

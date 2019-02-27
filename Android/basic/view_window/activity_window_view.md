@@ -1,4 +1,5 @@
 [Activity-Window-View层级嵌套结构](../context/ImageFiles/awv_001.jpg)    
+
 PhoneWindow 是在 Activity#attach 方法中创建的;  
 DecorView 是在 PhoneWindow#generateDecor 中创建的;  
 Activity#setContentView 和 PhoneWindow#setContentView 的入口参数都是, 布局文件的 id;  

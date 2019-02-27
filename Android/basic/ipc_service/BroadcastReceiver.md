@@ -213,6 +213,10 @@ ReceiverDispatcher 把这个广播放进 MainActivity 所在的线程的消息�
 ReceiverDispatcher 的内部类 Args 在 MainActivity 所在的线程消息循环中处理这个广播, 最终将这个广播分发给 BroadcastReceiver#onReceive 函数进行处理;  
 
 ### 参考  
+原理  
+https://www.jianshu.com/p/d0ab021a65f9  
+
+
 https://blog.csdn.net/luoshengyang/article/details/6744448  
 https://www.jianshu.com/p/abb173858faf  
 https://www.kancloud.cn/alex_wsc/androids/477751  
@@ -229,6 +233,7 @@ http://www.trinea.cn/android/localbroadcastmanager-impl
 https://www.jianshu.com/p/e110d5860a6b  
 http://gityuan.com/2017/04/23/local_broadcast_manager  
 https://juejin.im/entry/589b1c342f301e00699910f3  
-http://aspook.com/2017/10/12/LocalBroadcastManager%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90%E5%8F%8A%E5%BA%94%E7%94%A8  
-https://huangtianyu.gitee.io/2018/01/17/Android%E5%BA%94%E7%94%A8%E5%86%85%E9%83%A8%E5%B9%BF%E6%92%AD%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3  
+http://aspook.com/2017/10/12/LocalBroadcastManager原理分析及应用  
+https://huangtianyu.gitee.io/2018/01/17/Android应用内部广播机制详解  
+
    
