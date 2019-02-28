@@ -9,8 +9,8 @@
 
 
 ◆ 相关知识  
-[统一资源标识符 URI](/ComputerScience/network/library/URI.md)   
-[MIME数据类型](/ComputerScience/network/library/MIME.md)    
+[统一资源标识符 URI](/ComputerScience/network/URI.md)   
+[MIME数据类型](/ComputerScience/network/MIME.md)    
 辅助类 ContentResolver  
 辅助类 ContentUris  
 辅助类 UriMatcher  

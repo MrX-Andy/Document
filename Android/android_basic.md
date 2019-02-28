@@ -13,8 +13,8 @@ Activity;  Fragment;  Context;  Application;
 [ContentProvider](basic/ipc_service/ContentProvider.md)  
 [AIDL](basic/ipc_service/AIDL.md)  
 
-[统一资源标识符 URI](/ComputerScience/network/library/URI.md)   
-[MIME数据类型](/ComputerScience/network/library/MIME.md)    
+[统一资源标识符 URI](/ComputerScience/network/URI.md)   
+[MIME数据类型](/ComputerScience/network/MIME.md)    
 [Handler](basic/handler/Handler.md)  
 [Intent](basic/context/Intent.md)   
 [apk打包流程](basic/apk_build.md)    
