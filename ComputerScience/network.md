@@ -60,29 +60,53 @@ RST(reset 重置) ,  URG(urgent 紧急);
 established(连接已经建立),   
 ★ 三次握手  
 1.. 客户端向服务端发送,  
-      synchronous =1, 并产生一个随机数 sequence number;  
-      发送数据包给服务端, 要求建立联机, 并等待服务端确认;  
+      synchronous = 1;   
+      sequence number = 产生一个随机数;  
+      发送数据包给服务端, 要求建立连接, 并等待服务端确认;  
+      客户端进入 SYN-SENT 状态;  
 
 2.. 服务端收到后, 若同意建立连接, 则向客户端发送,  
-      synchronous = 1, 并产生一个随机数 Sequence number;  
-      acknowledge number = 客户端的 Sequence number +1;
+      synchronous = 1, 
       acknowledgement = 1;  
+      acknowledge number = 客户端的 Sequence number +1;  
+      sequence number = 产生一个随机数;  
       服务端进入等待接收状态;  
     
 3.. 最后, 客户端收到后, 检查 acknowledge number 是否正确,  
-       确认 acknowledgement 是不是1, 来判断服务端同意建立连接;  
-       再向服务端发送  acknowledge number = 服务端的 Sequence number +1, acknowledgement = 1,  
+       确认 acknowledgement 是不是1, 来判断服务端同意建立连接, 再向服务端发送,  
+       acknowledgement = 1;  
+       acknowledge number = 服务端的 sequence number +1;  
+       sequence number = 客户端之前产生的 sequence number + 1;  
        代表 "握手" 结束;  
 
 完成握手, 客户端就可以正常发数据给服务端了;  
 若在握手过程中, 某个阶段莫名中断,  TCP 协议会再次,以相同的顺序,发送相同的数据包;  
 
 ★ 四次挥手  
-1.. 客户端发送一个 FIN, 用来关闭客户端到服务端的数据传送, 客户端进入 FIN_WAIT_1 状态;  
-2.. 服务端收到FIN后, 发送一个ACK给客户端, 服务端进入CLOSE_WAIT状态;  
-3.. 服务端发送一个FIN, 用来关闭服务端到客户端的数据传送, 服务端进入LAST_ACK状态;  
-4..客户端收到FIN后, 客户端进入TIME_WAIT状态, 接着发送一个ACK给服务端, 服务端进入CLOSED状态;  
-     2MSL后, 客户端没有收到报文, 代表服务端已经关闭, 客户端也要进入CLOSED状态;       
+1.. 客户端向服务端发送,  
+       FIN = 1;  
+       sequence number = 产生一个随机数;  
+       客户端进入 FIN_WAIT_1 状态;  
+       
+2.. 服务端收到请求后, 向服务端发送,   
+      acknowledgement = 1;  
+      acknowledge number = 客户端的 sequence number +1;  
+      sequence number = 产生一个随机数;  
+      服务端 进入 CLOSE_WAIT;  
+      客户端进入 FIN_WAIT_2 状态;  
+
+3.. 服务端在确认结束之后, 向客户端发送,  
+      FIN = 1;  
+      acknowledgement = 1;  
+      sequence number = 产生一个随机数;  
+      acknowledge number = 客户端的 sequence number +1;  
+      服务端进入 LAST_ACK 状态;  
+
+4..客户端收到 服务端的 FIN 后, 客户端进入TIME_WAIT状态, 会向服务端发送,  
+      acknowledgement = 1;  
+      sequence number = 客户端之前产生的 sequence number + 1;  
+      acknowledge number = 服务端最后一次产生的 sequence number +1;  
+      2MSL后, 客户端没有收到报文, 代表服务端已经关闭, 客户端也要进入CLOSED状态;       
 
 FIN_WAIT_1:  
 其实 FIN_WAIT_1 和 FIN_WAIT_2 状态的真正含义都是表示等待对方的 FIN 报文;  
@@ -105,20 +129,16 @@ CLOSE_WAIT:
 LAST_ACK:  
 它是被动关闭一方在发送 FIN 报文后, 最后等待对方的 ACK 报文, 当收到 ACK 报文后, 也即可以进入到 CLOSED 可用状态了;  
 
-
-
-
-
 ★ MSL  
 MSL是 Maximum Segment Lifetime英文的缩写, 中文可以译为"报文最大生存时间", 他是任何报文在网络上存在的最长时间, 超过这个时间报文将被丢弃;      
 RFC 793 [Postel 1981c] 指出MSL为2分钟, 然而, 实现中的常用值是30秒, 1分钟, 或2分钟;  
 
 ★ 为什么上图中的A在TIME-WAIT状态必须等待2MSL时间呢?  
-♬ 第一, 为了保证A发送的最后一个ACK报文能够到达B;这个ACK报文段有可能丢失, 因而使处在LAST-ACK状态的B收不到对已发送的FIN+ACK报文段的确认;  
+1.. 为了保证A发送的最后一个ACK报文能够到达B;这个ACK报文段有可能丢失, 因而使处在LAST-ACK状态的B收不到对已发送的FIN+ACK报文段的确认;  
 B会超时重传这个FIN+ACK报文段, 而A就能在2MSL时间内收到这个重传的FIN+ACK报文段;  
 如果A在TIME-WAIT状态不等待一段时间, 而是在发送完ACK报文段后就立即释放连接, 就无法收到B重传的FIN+ACK报文段, 因而也不会再发送一次确认报文段;  
 这样, B就无法按照正常的步骤进入CLOSED状态; 
-♬ 第二, A在发送完ACK报文段后, 再经过2MSL时间, 就可以使本连接持续的时间所产生的所有报文段都从网络中消失;这样就可以使下一个新的连接中不会出现这种旧的连接请求的报文段;  
+2.. A在发送完ACK报文段后, 再经过2MSL时间, 就可以使本连接持续的时间所产生的所有报文段都从网络中消失;这样就可以使下一个新的连接中不会出现这种旧的连接请求的报文段;  
 
 ### Internet Protocol  
 IP不是可靠的协议, IP协议没有提供一种数据未传达以后的处理机制;  
@@ -162,6 +182,7 @@ http://www.cnblogs.com/tiwlin/archive/2011/12/25/2301305.html
 
 三次握手-四次挥手  
 https://blog.csdn.net/xifeijian/article/details/12777187  
+https://www.jianshu.com/p/9968b16b607e  
 
 图解HTTP  
 计算机网络第五版  

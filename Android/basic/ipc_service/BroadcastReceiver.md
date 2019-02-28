@@ -215,6 +215,7 @@ ReceiverDispatcher 的内部类 Args 在 MainActivity 所在的线程消息循�
 ### 参考  
 原理  
 https://www.jianshu.com/p/d0ab021a65f9  
+https://www.jianshu.com/p/37f366064b98  
 
 
 https://blog.csdn.net/luoshengyang/article/details/6744448  
