@@ -50,24 +50,68 @@ TCP 位于传输层, 提供可靠的字节流服务;
 
 为了准确无误地, 将数据送达目标处,  TCP 协议采用了, 三次握手(three-way handshaking)策略;  
 用 TCP 协议, 把数据包, 送出去后,  TCP 不会对传送后的情况置之不理,  它一定会向对方确认是否成功送达;  
-握手过程中使用了 TCP 的标志(flag), SYN(synchronize, 同步关键字), 和 ACK(acknowledgement, 确认关键字);  
-
+握手过程中使用了 TCP 的标志(flag):  
+SYN(synchronous 建立联机) ,  sequence number(顺序号码);  
+ACK(acknowledgement 确认), 在连接建立后所有传送的报文段 ACK 必须为 1; 
+acknowledge number(确认号码);  
+PSH(push 传送) ,  
+FIN(finish 结束), FIN = 表示释放一个连接;   
+RST(reset 重置) ,  URG(urgent 紧急);  
+established(连接已经建立),   
 ★ 三次握手  
-客户端, 首先发送一个带有 SYN, 的数据包, 给服务端, 并等待服务端确认;  
-服务端收到后, 若同意建立连接, 则向客户端发送, 带有 SYN 和 ACK 的数据包, 服务端进入等待接收状态;  
-最后, 客户端收到确认报文后, 发送带有 ACK 的数据包, 代表 "握手" 结束;  
+1.. 客户端向服务端发送,  
+      synchronous =1, 并产生一个随机数 sequence number;  
+      发送数据包给服务端, 要求建立联机, 并等待服务端确认;  
+
+2.. 服务端收到后, 若同意建立连接, 则向客户端发送,  
+      synchronous = 1, 并产生一个随机数 Sequence number;  
+      acknowledge number = 客户端的 Sequence number +1;
+      acknowledgement = 1;  
+      服务端进入等待接收状态;  
+    
+3.. 最后, 客户端收到后, 检查 acknowledge number 是否正确,  
+       确认 acknowledgement 是不是1, 来判断服务端同意建立连接;  
+       再向服务端发送  acknowledge number = 服务端的 Sequence number +1, acknowledgement = 1,  
+       代表 "握手" 结束;  
+
+完成握手, 客户端就可以正常发数据给服务端了;  
 若在握手过程中, 某个阶段莫名中断,  TCP 协议会再次,以相同的顺序,发送相同的数据包;  
 
 ★ 四次挥手  
-客户端发送一个 FIN, 用来关闭客户端到服务端的数据传送, 客户端进入FIN_WAIT_1状态;  
-服务端收到FIN后, 发送一个ACK给客户端, 服务端进入CLOSE_WAIT状态;  
-服务端发送一个FIN, 用来关闭服务端到客户端的数据传送, 服务端进入LAST_ACK状态;  
-客户端收到FIN后, 客户端进入TIME_WAIT状态, 接着发送一个ACK给服务端, 服务端进入CLOSED状态;  
+1.. 客户端发送一个 FIN, 用来关闭客户端到服务端的数据传送, 客户端进入 FIN_WAIT_1 状态;  
+2.. 服务端收到FIN后, 发送一个ACK给客户端, 服务端进入CLOSE_WAIT状态;  
+3.. 服务端发送一个FIN, 用来关闭服务端到客户端的数据传送, 服务端进入LAST_ACK状态;  
+4..客户端收到FIN后, 客户端进入TIME_WAIT状态, 接着发送一个ACK给服务端, 服务端进入CLOSED状态;  
      2MSL后, 客户端没有收到报文, 代表服务端已经关闭, 客户端也要进入CLOSED状态;       
 
+FIN_WAIT_1:  
+其实 FIN_WAIT_1 和 FIN_WAIT_2 状态的真正含义都是表示等待对方的 FIN 报文;  
+FIN_WAIT_1 状态实际上是当 SOCKET 在 ESTABLISHED 状态时, 它想主动关闭连接, 向对方发送了 FIN 报文, 此时该 SOCKET 即进入到 FIN_WAIT_1 状态;  
+而当对方回应 ACK 报文后, 则进入到 FIN_WAIT_2 状态;  
+当然在实际的正常情况下, 无论对方何种情况下, 都应该马上回应 ACK 报文;  
+
+FIN_WAIT_2:  上面已经详细解释了这种状态, 实际上 FIN_WAIT_2 状态下的SOCKET, 表示半连接, 也即有一方要求 close 连接,  
+但另外还告诉对方, 我暂时还有点数据需要传送给过去(ACK信息), 稍后再关闭连接;  
+
+TIME_WAIT:  
+表示收到了对方的 FIN 报文, 并发送出了 ACK 报文, 就等 2MSL 后即可回到 CLOSED 可用状态了;  
+如果 FIN_WAIT_1 状态下, 收到了对方同时带 FIN 标志和 ACK 标志的报文时, 可以直接进入到 TIME_WAIT 状态, 而无须经过 FIN_WAIT_2 状态;  
+
+CLOSE_WAIT:  
+这种状态的含义其实是表示在等待关闭, 当对方 close 一个 SOCKET 后发送 FIN 报文给自己, 系统毫无疑问地会回应一个 ACK 报文给对方, 此时则进入到 CLOSE_WAIT 状态;  
+接下来呢, 实际上还需要考虑的, 是否还有数据发送给对方, 如果没有的话, 那么就可以 close 这个 SOCKET, 发送 FIN 报文给对方, 也即关闭连接;  
+所以在 CLOSE_WAIT 状态下, 需要完成的事情是等待去关闭连接;  
+
+LAST_ACK:  
+它是被动关闭一方在发送 FIN 报文后, 最后等待对方的 ACK 报文, 当收到 ACK 报文后, 也即可以进入到 CLOSED 可用状态了;  
+
+
+
+
+
 ★ MSL  
-MSL是Maximum Segment Lifetime英文的缩写, 中文可以译为“报文最大生存时间”, 他是任何报文在网络上存在的最长时间, 超过这个时间报文将被丢弃;      
-RFC 793 [Postel 1981c] 指出MSL为2分钟;然而, 实现中的常用值是30秒, 1分钟, 或2分钟;  
+MSL是 Maximum Segment Lifetime英文的缩写, 中文可以译为"报文最大生存时间", 他是任何报文在网络上存在的最长时间, 超过这个时间报文将被丢弃;      
+RFC 793 [Postel 1981c] 指出MSL为2分钟, 然而, 实现中的常用值是30秒, 1分钟, 或2分钟;  
 
 ★ 为什么上图中的A在TIME-WAIT状态必须等待2MSL时间呢?  
 ♬ 第一, 为了保证A发送的最后一个ACK报文能够到达B;这个ACK报文段有可能丢失, 因而使处在LAST-ACK状态的B收不到对已发送的FIN+ACK报文段的确认;  
@@ -115,6 +159,10 @@ https://www.jianshu.com/p/116ebf3034d9
 https://quafoo.gitbooks.io/http2-rfc7540-zh-cn-en/chapter3/section3.5.html  
 https://www.jianshu.com/p/ef892323e68f  
 http://www.cnblogs.com/tiwlin/archive/2011/12/25/2301305.html  
+
+三次握手-四次挥手  
+https://blog.csdn.net/xifeijian/article/details/12777187  
+
 图解HTTP  
 计算机网络第五版  
 HTTP权威指南  
