@@ -33,7 +33,7 @@ UDP 则为应用层提供一种非常简单的服务, 它只是把称作数据�
 它们一起处理与电缆, 或其他任何传输媒介的, 物理接口细节;  
 常见协议:  ARP, RARP;  
 
-### DNS  
+DNS  
 位于应用层的协议, 它提供域名到 IP 地址之间的解析服务;  
 计算机既可以被赋予 IP 地址, 也可以被赋予主机名和域名;  
 比如 www.hackr.jp, 用户通常使用主机名, 或域名来访问对方的计算机,  而不是直接通过IP 地址访问;   
@@ -63,14 +63,14 @@ established(连接已经建立),
       synchronous = 1;   
       sequence number = 产生一个随机数;  
       发送数据包给服务端, 要求建立连接, 并等待服务端确认;  
-      客户端进入 SYN_SEND 状态;  
+      客户端进入 SYN_SENT 状态;  
 
 2.. 服务端收到后, 若同意建立连接, 则向客户端发送,  
       synchronous = 1, 
       acknowledgement = 1;  
-      acknowledge number = 客户端的 Sequence number +1;  
+      acknowledge number = 客户端的 sequence number +1;  
       sequence number = 产生一个随机数;  
-      服务端进入 SYN_RECV 状态;  
+      服务端进入 SYN_RECVD 状态;  
     
 3.. 最后, 客户端收到后, 检查 acknowledge number 是否正确,  
        确认 acknowledgement 是不是1, 来判断服务端同意建立连接, 再向服务端发送,  
@@ -85,7 +85,7 @@ established(连接已经建立),
 ★ 四次挥手  
 1.. 客户端向服务端发送,  
        FIN = 1;  
-       acknowledgement = 1;  ?  
+       acknowledgement = 1;  ?  (很多都没有这个, 估计是真的没有)  
        sequence number = 产生一个随机数;  
        客户端进入 FIN_WAIT_1 状态;  
        
@@ -130,15 +130,16 @@ CLOSE_WAIT:
 LAST_ACK:  
 它是被动关闭一方在发送 FIN 报文后, 最后等待对方的 ACK 报文, 当收到 ACK 报文后, 也即可以进入到 CLOSED 可用状态了;  
 
-★ MSL  
+❀ MSL  
 MSL是 Maximum Segment Lifetime英文的缩写, 中文可以译为"报文最大生存时间", 他是任何报文在网络上存在的最长时间, 超过这个时间报文将被丢弃;      
 RFC 793 [Postel 1981c] 指出MSL为2分钟, 然而, 实现中的常用值是30秒, 1分钟, 或2分钟;  
 
-★ 为什么上图中的 A 在 TIME-WAIT 状态必须等待 2MSL 时间呢?  
-1.. 为了保证 A 发送的最后一个 ACK 报文能够到达 B, 这个 ACK 报文段有可能丢失, 因而使处在 LAST-ACK 状态的 B, 收不到 A 发送的 FIN + ACK 报文段的确认;  
-B 会超时重传这个 FIN+ACK 报文段, 而 A 就能在 2MSL 时间内收到这个重传的 FIN+ACK 报文段;  
+❀ TIME-WAIT 状态必须等待 2MSL 时间呢?  
+1.. 保证 A 发送的最后一个 ACK 报文段可以到达B, 使得 B 正常关闭,  
 如果 A 在 TIME-WAIT 状态不等待一段时间, 而是在发送完 ACK 报文段后就立即释放连接, 就无法收到B重传的FIN+ACK报文段, 因而也不会再发送一次确认报文段;  
 这样, B就无法按照正常的步骤进入CLOSED状态; 
+为了保证 A 发送的最后一个 ACK 报文能够到达 B, 这个 ACK 报文段有可能丢失, 因而使处在 LAST_ACK 状态的 B, 收不到 A 发送的 FIN + ACK 报文段的确认;  
+B 会超时重传这个 FIN+ACK 报文段, 而 A 就能在 2MSL 时间内收到这个重传的 FIN+ACK 报文段;  
 
 2.. A 在发送完 ACK 报文段后, 再经过 2MSL 时间, 就可以使本连接这段时间内, 所产生的所有报文段, 都从网络中消失,  
 这样就可以使下一个新的连接中, 不会出现这种旧的连接请求的报文段;  
@@ -153,6 +154,8 @@ B 会超时重传这个 FIN+ACK 报文段, 而 A 就能在 2MSL 时间内收到�
 采用"三次握手"的办法可以防止上述现象发生, 如果客户端不会向服务端发出确认, 服务端由于收不到确认, 就知道客户端并没有要求建立连接, 主要目的防止服务端一直等待, 浪费资源;  
 
 
+SYN攻击  
+在三次握手过程中, Server 发送 SYN-ACK 之后, 收到 Client 的 ACK 之前的TCP连接称为半连接（half-open connect）, 此时Server处于SYN_RCVD状态, 当收到ACK后, Server转入ESTABLISHED状态。SYN攻击就是Client在短时间内伪造大量不存在的IP地址, 并向Server不断地发送SYN包, Server回复确认包, 并等待Client的确认, 由于源地址是不存在的, 因此, Server需要不断重发直至超时, 这些伪造的SYN包将产时间占用未连接队列, 导致正常的SYN请求因为队列满而被丢弃, 从而引起网络堵塞甚至系统瘫痪。SYN攻击时一种典型的DDOS攻击, 检测SYN攻击的方式非常简单, 即当Server上有大量半连接状态且源IP地址是随机的, 则可以断定遭到SYN攻击了
 
 ### Internet Protocol  
 IP不是可靠的协议, IP协议没有提供一种数据未传达以后的处理机制;  
@@ -178,11 +181,11 @@ IP 协议的作用是把各种数据包传送给对方; 而要保证确实传送
 
 
 ![五类互联网地址](network/ImageFiles/IP_001.png)  
-A类 范围 0.0.0.0 到 127.255.255.255;私有地址 10.0.0.0到10.255.255.255;保留地址 127.0.0.0到127.255.255.255, 0.0.0.0到0.255.255.255    
-B类 范围 128.0.0.0 到 191.255.255.255;私有地址 172.16.0.0到172.31.255.255;保留地址 169.254.0.0到169.254.255.255;  
-C类 范围 192.0.0.0 到 223.255.255.255;私有地址 192.168.0.0到192.168.255.255;  
-D类 范围 224.0.0.0 到 239.255.255.255;专用地址 224.0.0.0-224.0.0.255;公用地址 224.0.1.0-238.255.255.255;私有地址 239.0.0.0-239.255.255.255;    
-E类 范围 240.0.0.1 到 255.255.255.254;  
+A 类 范围 0.0.0.0 到 127.255.255.255, 私有地址 10.0.0.0 到 10.255.255.255, 保留地址 127.0.0.0 到 127.255.255.255, 0.0.0.0 到 0.255.255.255    
+B 类 范围 128.0.0.0 到 191.255.255.255, 私有地址 172.16.0.0 到 172.31.255.255, 保留地址 169.254.0.0 到 169.254.255.255;  
+C 类 范围 192.0.0.0 到 223.255.255.255, 私有地址 192.168.0.0 到 192.168.255.255;  
+D 类 范围 224.0.0.0 到 239.255.255.255, 专用地址 224.0.0.0-224.0.0.255, 公用地址 224.0.1.0-238.255.255.255, 私有地址 239.0.0.0-239.255.255.255;    
+E 类 范围 240.0.0.1 到 255.255.255.254,   
 
 
 ### 参考  
@@ -204,28 +207,28 @@ https://blog.csdn.net/ghyxq1010/article/details/46315985
 HTTP权威指南  
 
 ### 词条  
-ARP           Address Resolution Protocol                                                  地址解析协议  
-CDN          Content Delivery Network                                                       内容分发网络  
-DNS           Domain Name System                                                              域名系统, 域名解析系统  
+ARP           Address Resolution Protocol                                                     地址解析协议  
+CDN          Content Delivery Network                                                         内容分发网络  
+DNS           Domain Name System                                                                域名系统, 域名解析系统  
 DoS           Denial of Service                                                                          拒绝服务攻击  
-HTTP       HyperText Transfer Protocol                                                     超文本传输协议  
-HTTPS     HyperText Transfer Protocol over Secure Socket Layer   
-ICMP        Internet Control Message Protocol                                      控制报文协议  
-IGMP        Internet Group Management Protocol                               组管理协议  
-IP               Internet protocol                                                                         因特网, 互联协议  
-LAN           Local Area Network                                                                    局域网  
-MAC         Media Access Control Address                                               媒体访问控制地址  
-MIME       Multipurpose Internet Mail Extension                                 数据格式, 多用途因特网邮件扩展  
-OSI            Open System Interconnection Reference Model             开放式系统互联通信参考模型  
-RARP        Reverse Address Resolution Protocol                                  反向地址转换协议  
-SNMP       Simple Network Management Protocol                             简单网络管理协议  
-SMTP        Simple Mail Transfer Protocol                                                简单邮件传输协议  
-SSL             Secure Socket Layer                                                                    安全套接层  
-TCP            Transmission Control Protocol                                               传输控制协议  
+HTTP         HyperText Transfer Protocol                                                     超文本传输协议  
+HTTPS       HyperText Transfer Protocol over Secure Socket Layer   
+ICMP         Internet Control Message Protocol                                         控制报文协议  
+IGMP         Internet Group Management Protocol                                   组管理协议  
+IP                Internet protocol                                                                         因特网, 互联协议  
+LAN            Local Area Network                                                                    局域网  
+MAC          Media Access Control Address                                                  媒体访问控制地址  
+MIME        Multipurpose Internet Mail Extension                                    数据格式, 多用途因特网邮件扩展  
+OSI            Open System Interconnection Reference Model                  开放式系统互联通信参考模型  
+RARP         Reverse Address Resolution Protocol                                     反向地址转换协议  
+SNMP        Simple Network Management Protocol                                 简单网络管理协议  
+SMTP         Simple Mail Transfer Protocol                                                  简单邮件传输协议  
+SSL             Secure Socket Layer                                                                   安全套接层  
+TCP            Transmission Control Protocol                                                传输控制协议  
 TLS             Transport Layer Security                                                           传输层安全协议  
 UDP           User Datagram Protocol                                                           用户数据报协议  
-URI            Uniform Resource Identifier                                                    统一资源标识符   
-URL           Uniform Resource Locator                                                        统一资源定位符  
-REST         Representational State Transfer                                             表现层状态转移  
-ROA         The Resource-Oriented Architecture                                     面向资源的架构  
+URI            Uniform Resource Identifier                                                     统一资源标识符   
+URL            Uniform Resource Locator                                                       统一资源定位符  
+REST          Representational State Transfer                                             表现层状态转移  
+ROA           The Resource-Oriented Architecture                                      面向资源的架构  
 
