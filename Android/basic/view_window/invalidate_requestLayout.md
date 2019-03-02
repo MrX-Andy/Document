@@ -1462,7 +1462,7 @@ https://www.jianshu.com/p/996bca12eb1d
  https://www.jianshu.com/p/dd32ec35db1d  
 https://www.jianshu.com/p/a769a6028e51  
 http://aspook.com/2017/11/01/Android-Choreographer  
-
+https://www.jianshu.com/p/7897d97d17cc  
 双缓冲机制  
 https://blog.csdn.net/zhangbijun1230/article/details/80376181  
 

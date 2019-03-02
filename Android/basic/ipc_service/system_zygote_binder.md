@@ -399,7 +399,7 @@ Binder系列08    http://gityuan.com/2015/11/22/binder-use/
 Binder系列09    http://gityuan.com/2015/11/23/binder-aidl/
 Binder系列10    http://gityuan.com/2015/11/28/binder-summary/  
 https://blog.csdn.net/carson_ho/article/details/73560642  
-
+https://www.jianshu.com/p/1eff5a13000d  
 http://www.aoaoyi.com/archives/1006.html
 https://blog.csdn.net/bettarwang/article/details/51166823  
 https://juejin.im/entry/59c9cd8e518825745c636ffd  
