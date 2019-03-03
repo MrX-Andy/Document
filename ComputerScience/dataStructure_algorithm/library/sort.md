@@ -1,4 +1,5 @@
 ### 冒泡排序  
+生成递增数组;  
 ```
 private static void bubbleSort(int array[]) {
     if (array == null || array.length <= 1) {
@@ -16,6 +17,7 @@ private static void bubbleSort(int array[]) {
 }
 ```
 ### 简单选择排序  
+生成递增数组;  
 ```
 private static void selectionSort(int[] array) {
     if (array == null || array.length <= 1) {
@@ -37,6 +39,7 @@ private static void selectionSort(int[] array) {
 }
 ```
 ### 快速排序 #递归  
+生成递增数组;  
 ```
 public static void sort(int array[]) {
     if (array == null || array.length <= 1) {
@@ -78,6 +81,7 @@ public static int partition(int[] array, int low, int high) {
 }
 ``` 
 ### 快速排序 #非递归  
+生成递增数组;  
 ```
 /**
  * 快速排序#非递归用
