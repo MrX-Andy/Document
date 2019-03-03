@@ -130,6 +130,7 @@ https://juejin.im/post/5c469b23f265da614933efe8
 https://juejin.im/post/5c483eaff265da61327fa0e3  
 https://blog.csdn.net/AndrExpert/article/details/81488503  
 https://www.jianshu.com/p/a72c5ccbd150  
+https://lrh1993.gitbooks.io/android_interview_guide/content/android/advance/app-launch.html  
 
 
 
