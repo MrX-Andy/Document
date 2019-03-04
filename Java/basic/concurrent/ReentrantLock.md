@@ -619,4 +619,10 @@ https://blog.csdn.net/gao__xue/article/details/79950448
 https://blog.csdn.net/javazejian/article/details/75043422  
 https://blog.csdn.net/lsgqjh/article/details/63685058  
 https://blog.csdn.net/u010942020/article/details/73310898  
+https://javadoop.com/2017/06/16/AbstractQueuedSynchronizer/  
+https://blog.csdn.net/javazejian/article/details/72828483  
+http://www.liuhaihua.cn/archives/518637.html  
+https://blog.csdn.net/liyantianmin/article/details/54673109  
 
+锁的分类  
+https://blog.csdn.net/qq_41931837/article/details/82314478  
