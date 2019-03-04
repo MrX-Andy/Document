@@ -160,10 +160,10 @@ int CANCELLED = 1;
 处于这种状态的 Node, 会被踢出队列, 被GC回收;  
 
 int SIGNAL = -1;  
-表示这个 Node, 的继任(后驱) Node 被阻塞了, 到时需要通知它;  
+线程的后继线程正在/已经被阻塞, 当该线程 release 或 cancel 时要重新这个后继线程(unpark);  
 
 int CONDITION = -2;   
-表示这个 Node, 在条件队列中, 因为等待某个条件而被阻塞;  
+表明该线程被处于条件队列, 就是因为调用了 Condition.await 而被阻塞;  
 
 int PROPAGATE = -3;   
 使用在共享模式头 Node, 有可能处于这种状态, 表示锁的下一次获取, 可以无条件传播;  
@@ -268,16 +268,31 @@ compareAndSetWaitStatus(node, expect, update)
 #### 非公平锁#加锁过程   
 默认是非公平锁, NonfairSync;  
 加锁, 等待锁的过程;  
+1.0.. 加锁时, 根据 lock.state 进行判断, 如果 lock.state == 0, 代表当前没有任何线程持有该锁;  
+1.1.. 调用 compareAndSetState 抢占锁, 抢占成功更新 lock.state = 1, 并设置 exclusiveOwnerThread = 当前线程;  
+2.0.. 加锁时, 根据 lock.state 进行判断, 如果 lock.state != 0, 代表有线程持有该锁, 调用 acquire 方法, 申请锁;  
+2.1.. acquire-tryAcquire-nonfairTryAcquire, 再判断, 如果 lock.state ==0, 则和 1.1 步骤一致, 并返回 true;  
+2.2.. acquire-tryAcquire-nonfairTryAcquire, 再判断, 如果 lock.state !=0, 同时 exclusiveOwnerThread == current.Thread, 那么 lock.state 会执行 +1, 并返回 true;  
+2.3.. 没有进入 2.1 和 2.2, 代表申请锁, 失败了, 也就是在 acquire 方法中, 开始执行 addWaiter-acquireQueued;  
+3.0.. 在 addWaiter 方法中, 如果 tail 节点非空, 并且把当前线程当做尾节点, 并更新 tail 的指针, 如果操作成功, 返回;  
+3.1.. 在 addWaiter  方法中, 如果 tail 节点为空, 或者没有成功的把, 当前线程设置成尾节点, 执行 enq 方法;  
+3.2.. 在 enq 方法中, 进入死循环, 如果当前链表为空, 则执行初始化, 继续死循环;  
+3.3.. 在 enq 方法中, 进入死循环, 如果当前链表非空, 则把当前线程添加到尾节点, 添加失败则继续死循环, 设置成功则返回, 执行 acquireQueued 方法;  
+4.0.. 在 acquireQueued 方法中, 入口参数就是尾节点, 如果新节点的前驱是 head 节点, 再调用 tryAcquire 获取锁, 如果获取成功则更新 head 节点, 并返回;  
+4.1.. 在 acquireQueued 方法中, 入口参数就是尾节点, 如果新节点的前驱不是 head 节点, 则调用 shouldParkAfterFailedAcquire 方法, 
 ReentrantLock#lock  
 ReentrantLock.NonfairSync#lock  
 ```
 final void lock() {
-    //  调用 CAS 抢占锁, 抢占失败, 调用 acquire 方法将线程置于队列尾部排队;  
+    //  1.. 如果当前 lock.state = 0, 代表等待队列是空的, 当前也没有任何线程持有锁;  
+    //  2.1.. 当前线程开始抢占锁, 如果抢占成功, 执行 setExclusiveOwnerThread 方法;  
+    //  2.1.. 如果抢占失败, 执行 acquire;  
     if (compareAndSetState(0, 1))
-        //  抢占成功, 执行  setExclusiveOwnerThread, 添加标记, 设置当前线程持有锁;  
+        //  抢占成功, 添加标记, 设置当前线程持有锁;  
         setExclusiveOwnerThread(Thread.currentThread());
-    else
-        acquire(1);
+    else  
+        //  将线程置于队列尾部排队;  
+        acquire(1);  
 }
 ```
 lock()内部调用 acquire(1), 为何是"1"呢?  
@@ -287,7 +302,7 @@ AbstractQueuedSynchronizer#acquire
 ```
 public final void acquire(int arg) {
     // 如果 tryAcquire 返回 true, 就不会执行 addWaiter-acquireQueued;  
-    if (!tryAcquire(arg) &&
+    if (!tryAcquire(arg) &&  
         acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
         selfInterrupt();
 }
