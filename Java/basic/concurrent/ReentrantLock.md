@@ -279,7 +279,14 @@ compareAndSetWaitStatus(node, expect, update)
 3.2.. 在 enq 方法中, 进入死循环, 如果当前链表为空, 则执行初始化, 继续死循环;  
 3.3.. 在 enq 方法中, 进入死循环, 如果当前链表非空, 则把当前线程添加到尾节点, 添加失败则继续死循环, 设置成功则返回, 执行 acquireQueued 方法;  
 4.0.. 在 acquireQueued 方法中, 入口参数就是尾节点, 如果新节点的前驱是 head 节点, 再调用 tryAcquire 获取锁, 如果获取成功则更新 head 节点, 并返回;  
-4.1.. 在 acquireQueued 方法中, 入口参数就是尾节点, 如果新节点的前驱不是 head 节点, 则调用 shouldParkAfterFailedAcquire 方法, 
+4.1.. 在 acquireQueued 方法中, 入口参数就是尾节点, 如果新节点的前驱不是 head 节点, 则循环调用 shouldParkAfterFailedAcquire 方法, 一致到他返回 true, 导致线程阻塞, 
+5.0.. 在 shouldParkAfterFailedAcquire 方法中, 如果前驱节点的状态是 SIGNAL, 表明当前节点需要 unPark, 则返回 true;  
+5.1.. 在 shouldParkAfterFailedAcquire 方法中, 如果前驱节点的状态大于 0, 也就是 CANCELLED, 说明前驱节点已经被放弃, 则回溯到一个非取消的前驱节点, 返回 false;  
+5.2.. 在 shouldParkAfterFailedAcquire 方法中, 如果前驱节点状态为 非SIGNAL, 非CANCELLED, 则设置前驱的状态为 SIGNAL, 返回false;  
+5.3... shouldParkAfterFailedAcquire 就是依赖前驱节点, 判断当前线程是否应该被阻塞, 如果前驱节点处于 CANCELLED 状态, 则删除这些节点重新构造队列;  
+6.0.. 在 acquireQueued 方法中, 入口参数就是尾节点, 如果新节点的前驱不是 head 节点, shouldParkAfterFailedAcquire 返回 true, 则调用 parkAndCheckInterrupt;  
+6.1.. parkAndCheckInterrupt 就是把当前线程挂起, 从而阻塞住线程的调用栈;  
+
 ReentrantLock#lock  
 ReentrantLock.NonfairSync#lock  
 ```
@@ -481,6 +488,14 @@ LockSupport.park(this) 会挂起当前线程, 但是 LockSupport.park 还有一�
 
 #### 非公平锁#释放锁过程   
 非公平锁, 释放锁的过程;  
+1.0.. 调用顺序是 unlock-release-tryRelease,  
+1.1.. 在 tryRelease 方法中, 如果 exclusiveOwnerThread 不是当前线程, 直接抛异常;   
+1.2.. 在 tryRelease 方法中, 判断 state -1 == 0, 释放 exclusiveOwnerThread, 并更新 lock.state = 0, 表示当前锁未被任何线程占用, 锁时空闲的, 返回 true;  
+1.3.. 在 tryRelease 方法中, 判断 state -1 != 0, 只更新 lock.state = lock.state -1, 表示当前锁仍被占用, 返回 false;  
+2.0.. 在 release 方法中, 如果 tryRelease 返回 true, 执行 unparkSuccessor 方法;  
+3.0.. 在 unparkSuccessor 方法中, 从 head 指针往后找, 找到第一个可用的节点, 正常来讲, 队列的头节点, 就可用;  
+3.1.. 因为在 acquireQueued 方法中, 曾经调用过 parkAndCheckInterrupt 把当前线程挂起, 现在调用 LockSupport.unpark, 唤醒线程,  
+
 ReentrantLock#unlock  
 AbstractQueuedSynchronizer#release  
 ```
@@ -638,6 +653,7 @@ https://javadoop.com/2017/06/16/AbstractQueuedSynchronizer/
 https://blog.csdn.net/javazejian/article/details/72828483  
 http://www.liuhaihua.cn/archives/518637.html  
 https://blog.csdn.net/liyantianmin/article/details/54673109  
+https://blog.csdn.net/chen77716/article/details/6641477  
 
 锁的分类  
 https://blog.csdn.net/qq_41931837/article/details/82314478  
