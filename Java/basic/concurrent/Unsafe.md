@@ -27,3 +27,4 @@ public native boolean compareAndSwapInt(Object obj, long offset, int expect, int
 ```
 ### 参考  
 https://www.jb51.net/article/136718.htm  
+https://juejin.im/post/5c7a86d2f265da2d8e7101a1  
