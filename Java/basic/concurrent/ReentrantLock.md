@@ -24,8 +24,8 @@ ReentrantLock 默认选择的是非公平锁, 则是为了减少一部分上下�
 
 ❀ 公平锁, 为什么会比较慢?  
 公平锁性能比较低, 不是因为检查队列会变慢, 而是因为要让活跃线程无法得到锁, 进入等待状态, 并唤醒等待的线程, 引起了频繁的上下文切换, 从而降低了整体的效率;  
-
-
+❀ CLH  
+CLH 锁是一个自旋锁, 
 ### ReentrantLock#synchronized  
 1.. Lock 是一个接口, 而 synchronized 是 Java 中的关键字, synchronized 是内置的语言实现;  
 
@@ -161,12 +161,15 @@ int CANCELLED = 1;
 
 int SIGNAL = -1;  
 线程的后继线程正在/已经被阻塞, 当该线程 release 或 cancel 时要重新这个后继线程(unpark);  
+后驱节点, 需要唤醒;  
+
 
 int CONDITION = -2;   
 表明该线程被处于条件队列, 就是因为调用了 Condition.await 而被阻塞;  
 
 int PROPAGATE = -3;   
 使用在共享模式头 Node, 有可能处于这种状态, 表示锁的下一次获取, 可以无条件传播;  
+共享模式下起, 后驱结点会传播唤醒的操作;  
 
 int waitStatus;   
 0, 新 Node 会处于这种状态;  
@@ -263,9 +266,13 @@ compareAndSetTail(expect, update)
 compareAndSetWaitStatus(node, expect, update)   
 利用 CAS 设置某个 Node 中的等待状态;  
 
+### LockSupport  
+
 ### 原理   
 
 #### 非公平锁#加锁过程   
+head-第一个排队的节点-第N个排队的节点-tail;  
+
 默认是非公平锁, NonfairSync;  
 加锁, 等待锁的过程;  
 1.0.. 加锁时, 根据 lock.state 进行判断, 如果 lock.state == 0, 代表当前没有任何线程持有该锁;  
@@ -278,10 +285,10 @@ compareAndSetWaitStatus(node, expect, update)
 3.1.. 在 addWaiter  方法中, 如果 tail 节点为空, 或者没有成功的把, 当前线程设置成尾节点, 执行 enq 方法;  
 3.2.. 在 enq 方法中, 进入死循环, 如果当前链表为空, 则执行初始化, 继续死循环;  
 3.3.. 在 enq 方法中, 进入死循环, 如果当前链表非空, 则把当前线程添加到尾节点, 添加失败则继续死循环, 设置成功则返回, 执行 acquireQueued 方法;  
-4.0.. 在 acquireQueued 方法中, 入口参数就是尾节点, 如果新节点的前驱是 head 节点, 再调用 tryAcquire 获取锁, 如果获取成功则更新 head 节点, 并返回;  
+4.0.. 在 acquireQueued 方法中, 入口参数就是尾节点, 如果新节点的前驱是 head 节点, 说明当前节点是第一个排队的节点, 再调用 tryAcquire 获取锁, 如果获取成功则更新 head 节点, 并返回;  
 4.1.. 在 acquireQueued 方法中, 入口参数就是尾节点, 如果新节点的前驱不是 head 节点, 则循环调用 shouldParkAfterFailedAcquire 方法, 一致到他返回 true, 导致线程阻塞, 
-5.0.. 在 shouldParkAfterFailedAcquire 方法中, 如果前驱节点的状态是 SIGNAL, 表明当前节点需要 unPark, 则返回 true;  
-5.1.. 在 shouldParkAfterFailedAcquire 方法中, 如果前驱节点的状态大于 0, 也就是 CANCELLED, 说明前驱节点已经被放弃, 则回溯到一个非取消的前驱节点, 返回 false;  
+5.0.. 在 shouldParkAfterFailedAcquire 方法中, 如果前驱节点的状态是 SIGNAL, 当前节点可以被阻塞, 当他的前驱节点释放是, 要唤醒当前节点-unPark, 可以被阻塞, 则返回 true;  
+5.1.. 在 shouldParkAfterFailedAcquire 方法中, 如果前驱节点的状态大于 0, 也就是 CANCELLED, 说明前驱节点已经被放弃, 则回溯到一个非取消的前驱节点, 此过程重组了链表关系, 返回 false;  
 5.2.. 在 shouldParkAfterFailedAcquire 方法中, 如果前驱节点状态为 非SIGNAL, 非CANCELLED, 则设置前驱的状态为 SIGNAL, 返回false;  
 5.3... shouldParkAfterFailedAcquire 就是依赖前驱节点, 判断当前线程是否应该被阻塞, 如果前驱节点处于 CANCELLED 状态, 则删除这些节点重新构造队列;  
 6.0.. 在 acquireQueued 方法中, 入口参数就是尾节点, 如果新节点的前驱不是 head 节点, shouldParkAfterFailedAcquire 返回 true, 则调用 parkAndCheckInterrupt;  
@@ -490,7 +497,7 @@ LockSupport.park(this) 会挂起当前线程, 但是 LockSupport.park 还有一�
 非公平锁, 释放锁的过程;  
 1.0.. 调用顺序是 unlock-release-tryRelease,  
 1.1.. 在 tryRelease 方法中, 如果 exclusiveOwnerThread 不是当前线程, 直接抛异常;   
-1.2.. 在 tryRelease 方法中, 判断 state -1 == 0, 释放 exclusiveOwnerThread, 并更新 lock.state = 0, 表示当前锁未被任何线程占用, 锁时空闲的, 返回 true;  
+1.2.. 在 tryRelease 方法中, 判断 state -1 == 0, 释放 exclusiveOwnerThread, 并更新 lock.state = 0, 表示当前锁未被任何线程占用, 锁是空闲的, 返回 true;  
 1.3.. 在 tryRelease 方法中, 判断 state -1 != 0, 只更新 lock.state = lock.state -1, 表示当前锁仍被占用, 返回 false;  
 2.0.. 在 release 方法中, 如果 tryRelease 返回 true, 执行 unparkSuccessor 方法;  
 3.0.. 在 unparkSuccessor 方法中, 从 head 指针往后找, 找到第一个可用的节点, 正常来讲, 队列的头节点, 就可用;  
@@ -549,6 +556,10 @@ private void unparkSuccessor(Node node) {
     //  获取等待状态
     int ws = node.waitStatus;
     //  如果 ws < 0, 就将其变为 0
+    //  如果状态小于 0, 把状态改成 0, 0 是空的状态, 因为当前节点的线程释放了锁后续不需要做任何操作, 不需要这个标志位,  
+    // 即使 CAS 修改失败了也没关系, 其实这里如果只是对于锁来说根本不需要 CAS,   
+    //  因为这个方法只会被释放锁的线程访问, 只不过 unparkSuccessor 这个方法是 AQS 里的方法,  
+    //  就必须考虑到多个线程同时访问的情况(可能共享锁或者信号量这种);  
     if (ws < 0)
         compareAndSetWaitStatus(node, ws, 0);
     /  获取 head 的后继节点
@@ -659,3 +670,11 @@ https://www.cnblogs.com/zhanjindong/p/java-concurrent-package-aqs-AbstractQueued
 
 锁的分类  
 https://blog.csdn.net/qq_41931837/article/details/82314478  
+
+### 词条  
+AQS                AbstractQueuedSynchronizer  
+CLH                Craig, Landin, and Hagersten   
+SMP                Symmetric Multi-Processor  
+
+
+
