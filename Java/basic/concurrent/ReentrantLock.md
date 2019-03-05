@@ -74,6 +74,18 @@ public class Test01 {
 
 }
 ```
+#### 可重入  
+```
+void m1() {
+    lock.lock();
+    try {
+        // 调用 m2，因为可重入，所以并不会被阻塞
+        m2();
+    } finally {
+        lock.unlock()
+    }
+}
+```
 
 ### ReentrantLock  
 ReentrantLock#tryLock  
@@ -269,6 +281,10 @@ compareAndSetWaitStatus(node, expect, update)
 ### LockSupport  
 
 ### 原理   
+AQS 主要做了三件事情:  
+1.. 同步状态的管理;  
+2.. 线程的阻塞和唤醒;  
+3.. 同步队列的维护;  
 
 #### 非公平锁#加锁过程   
 head-第一个排队的节点-第N个排队的节点-tail;  
@@ -411,9 +427,10 @@ final boolean acquireQueued(final Node node, int arg) {
         for (;;) {
             //  获取节点的前驱;  
             final Node p = node.predecessor();
-            //  如果 node 前驱节点恰好是 head;  
+            //  如果 node 前驱节点恰好是 head, 说明当前节点是队列第一个等待的节点;  
             //  那么就可以在次尝试获取一次锁;  
-            //  队首节点很乐观, 因为确实很可能马上轮到他来获取锁;  
+            //  这里有的同学可能没看懂, 不是刚尝试失败并插入队列了吗, 怎么又尝试获取锁?   
+            //  其实这里是个循环, 其他刚被唤醒的线程也会执行到这个代码; 
             if (p == head && tryAcquire(arg)) {
                 //  很幸运的是, 它居然再一次的尝试成功获取了锁;  
                 //  那 head 自然就要指到它的头上;  
@@ -425,8 +442,9 @@ final boolean acquireQueued(final Node node, int arg) {
                 return interrupted;
             }
             //  不是 head 的后一个, 或者是 head 的后一个, 但是没有获取到锁;  
-            //  获取锁失败了, 是否要阻塞这个线程;  
-            //  是否挂起 ?  
+            //  shouldParkAfterFailedAcquire 判断, 获取锁失败了, 是否要阻塞这个线程;  
+            //  是, 调用 parkAndCheckInterrupt 进行阻塞;  
+            //  否, 继续循环;
             if (shouldParkAfterFailedAcquire(p, node) &&
                 //  在这阻塞, 等待唤醒
                 parkAndCheckInterrupt())
@@ -445,7 +463,7 @@ AbstractQueuedSynchronizer#shouldParkAfterFailedAcquire
 private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
     //  获取前驱的等待状态;  
     int ws = pred.waitStatus;
-    //  如果线程前驱的等待状态为 -1, 即在执行状态, 那么就阻塞 node  
+    //  前置节点状态是 signal, 那当前节点可以安全阻塞, 因为前置节点承诺执行完之后会通知唤醒当前节点
     if (ws == Node.SIGNAL)
         /*
          * This node has already set status asking a release
@@ -453,6 +471,7 @@ private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
          */
         return true;
     //  如果线程前驱的等待状态大于 0, 即是 1 CANCELLED 就把前面的等待状态为 1 的删了, 删到直到不为 1;  
+    //  前置节点如果已经被取消了, 则一直往前遍历直到前置节点不是取消状态, 与此同时会修改链表关系;  
     if (ws > 0) {
         /*
          * Predecessor was cancelled. Skip over predecessors and
@@ -468,11 +487,9 @@ private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
         // 那么只剩 0 了, 前驱的节点的 ws 设置为 -1  
         // 在之前图表示的时候, 为 -1 是执行状态, 但这种状态是阻塞状态;  
         // 直到前一个线程释放了锁, 才能使执行状态
-        /*
-         * waitStatus must be 0 or PROPAGATE.  Indicate that we
-         * need a signal, but don't park yet.  Caller will need to
-         * retry to make sure it cannot acquire before parking.
-         */
+        //  前置节点是 0 或者 propagate 状态, 这里通过 CAS 把前置节点状态改成 signal; 
+        //  这里不返回 true 让当前节点阻塞, 而是返回 false, 目的是让调用者再 check 一下当前线程是否能成功获取锁;  
+        //  失败的话再阻塞;  
         compareAndSetWaitStatus(pred, ws, Node.SIGNAL);
     }
     return false;
@@ -492,16 +509,78 @@ LockSupport.park(this) 会挂起当前线程, 但是 LockSupport.park 还有一�
 如果是 1, 那么置为 0, 并且这次不挂起;  
 如果是 0, 那么就直接挂起这个线程;  
 如果线程被阻塞过, 返回 true;  
+LockSupport#park  
+```
+public static void park(Object blocker) {
+    Thread t = Thread.currentThread();
+    //  设置当前线程的监视器 blocker
+    setBlocker(t, blocker);
+    //  这里调用了 native 方法到 JVM 级别的阻塞机制阻塞当前线程
+    U.park(false, 0L);
+    //  阻塞结束后把 blocker 置空
+    setBlocker(t, null);
+}
+```
 
-#### 非公平锁#释放锁过程   
-非公平锁, 释放锁的过程;  
+
+#### 公平锁#加锁过程   
+公平锁的抢占逻辑和非公平锁很像, 只是在抢占之前, 会判断队列中, 有没有线程在排队, 如果有, 当前线程放在队尾;  
+非公平锁的抢占逻辑是, 先看能不能抢到, 如果抢不到, 在放在队尾;  
+
+ReentrantLock#lock  
+ReentrantLock.FairSync#lock  
+```
+final void lock() {
+    acquire(1);
+}
+```
+
+AbstractQueuedSynchronizer#acquire  
+ReentrantLock.FairSync#tryAcquire  
+```
+protected final boolean tryAcquire(int acquires) {
+    final Thread current = Thread.currentThread();
+    int c = getState();
+    if (c == 0) {
+        //  同步状态更新成功;  
+        //  判断同步队列中当前节点是否有前驱节点, 
+        //  如果有说明有线程更早的请求锁, 因此需要等待前驱节点线程获取锁, 并释放锁之后, 当前线程才能继续获取锁;  
+        if (!hasQueuedPredecessors() &&
+            compareAndSetState(0, acquires)) {
+            //  添加标记, 设置当前线程持有锁;  
+            setExclusiveOwnerThread(current);
+            return true;
+        }
+    }
+    //  这个锁被人占了, 确认一下是不是自己现在占着这个锁  
+    //  是自己占着这个锁, 且 c!=0了, 也就是重入了;  
+    else if (current == getExclusiveOwnerThread()) {
+        int nextc = c + acquires;
+        //  这个线程占有这个锁的次数太多了, 使 int 溢出了, 抛出异常
+        if (nextc < 0)
+            throw new Error("Maximum lock count exceeded");
+        //  设置新的同步状态值, 也就是当前线程第几次获得了锁;    
+        setState(nextc);
+        return true;
+    }
+    return false;
+}
+```
+公平锁获取过程, 仅加入了当前线程(Node)之前是否有前置节点在等待的判断, 也就是说当前面没有人排在该节点(Node)前面时候队且能够设置成功状态, 才能够获取锁;  
+如果锁未被任何线程持有, 则立即返回且设置持有数=1;  
+如果锁被当前线程已持, 则立即返回, 且持有数+1;  
+如果锁被其他线程持有, 则当前线程进入等待队列;  
+
+
+#### 释放锁过程   
+释放锁的过程, 不区分公平与非公平;  
 1.0.. 调用顺序是 unlock-release-tryRelease,  
 1.1.. 在 tryRelease 方法中, 如果 exclusiveOwnerThread 不是当前线程, 直接抛异常;   
 1.2.. 在 tryRelease 方法中, 判断 state -1 == 0, 释放 exclusiveOwnerThread, 并更新 lock.state = 0, 表示当前锁未被任何线程占用, 锁是空闲的, 返回 true;  
 1.3.. 在 tryRelease 方法中, 判断 state -1 != 0, 只更新 lock.state = lock.state -1, 表示当前锁仍被占用, 返回 false;  
 2.0.. 在 release 方法中, 如果 tryRelease 返回 true, 执行 unparkSuccessor 方法;  
 3.0.. 在 unparkSuccessor 方法中, 从 head 指针往后找, 找到第一个可用的节点, 正常来讲, 队列的头节点, 就可用;  
-3.1.. 因为在 acquireQueued 方法中, 曾经调用过 parkAndCheckInterrupt 把当前线程挂起, 现在调用 LockSupport.unpark, 唤醒线程,  
+3.1.. 因为在 acquireQueued 方法中, 曾经调用过 parkAndCheckInterrupt 把当前线程挂起, 在 unparkSuccessor 发布方法中, 调用 LockSupport.unpark 唤醒线程;  
 
 ReentrantLock#unlock  
 AbstractQueuedSynchronizer#release  
@@ -567,8 +646,10 @@ private void unparkSuccessor(Node node) {
     //  如果 head 的后继节点不存在, 或者 ws 为 1;  
     if (s == null || s.waitStatus > 0) {
         s = null;
+        //  如果下一个节点为空或者下一个节点的状态 > 0 (目前大于0就是取消状态)
         for (Node t = tail; t != null && t != node; t = t.prev)
             //  就从队列的后面往前面找, 找到最前面一个 ws < 0 的, 但是又不是 head 的节点;  
+            //  则从 tail 节点开始遍历找到离当前节点最近的且 waitStatus<=0(即非取消状态)的节点并唤醒
             if (t.waitStatus <= 0)
                 s = t;
     }
@@ -577,65 +658,12 @@ private void unparkSuccessor(Node node) {
         LockSupport.unpark(s.thread);
 }
 ```
-#### 公平锁#加锁过程  
-ReentrantLock#lock  
-ReentrantLock.FairSync#lock  
-```
-final void lock() {
-    acquire(1);
-}
-```
+#### Condition#wait-notifyAll  
+Condition 是一个接口, AbstractQueuedSynchronizer 中的 ConditionObject 内部类实现了这个接口, Condition 声明了一组等待/通知的方法,   
+这些方法的功能与 Object 中的 wait/notify/notifyAll 等方法相似,  
+它们都是为了协调线程的运行秩序, 只不过, Object 中的方法需要配合 synchronized 关键字使用, 而 Condition 中的方法则要配合锁对象使用, 并通过 newCondition 方法获取实现类对象;  
+除此之外, Condition 接口中声明的方法功能上更为丰富一些, 比如, Condition 声明了具有不响应中断和超时功能的等待接口, 这些都是 Object wait 方法所不具备的;  
 
-AbstractQueuedSynchronizer#acquire  
-ReentrantLock.FairSync#tryAcquire  
-```
-protected final boolean tryAcquire(int acquires) {
-    final Thread current = Thread.currentThread();
-    int c = getState();
-    if (c == 0) {
-        //  同步状态更新成功;  
-        //  判断同步队列中当前节点是否有前驱节点, 
-        //  如果有说明有线程更早的请求锁, 因此需要等待前驱节点线程获取锁, 并释放锁之后, 当前线程才能继续获取锁;  
-        if (!hasQueuedPredecessors() &&
-            compareAndSetState(0, acquires)) {
-            //  添加标记, 设置当前线程持有锁;  
-            setExclusiveOwnerThread(current);
-            return true;
-        }
-    }
-    //  这个锁被人占了, 确认一下是不是自己现在占着这个锁  
-    //  是自己占着这个锁, 且 c!=0了, 也就是重入了;  
-    else if (current == getExclusiveOwnerThread()) {
-        int nextc = c + acquires;
-        //  这个线程占有这个锁的次数太多了, 使 int 溢出了, 抛出异常
-        if (nextc < 0)
-            throw new Error("Maximum lock count exceeded");
-        //  设置新的同步状态值, 也就是当前线程第几次获得了锁;    
-        setState(nextc);
-        return true;
-    }
-    return false;
-}
-```
-公平锁获取过程, 仅加入了当前线程(Node)之前是否有前置节点在等待的判断, 也就是说当前面没有人排在该节点(Node)前面时候队且能够设置成功状态, 才能够获取锁;  
-如果锁未被任何线程持有, 则立即返回且设置持有数=1;  
-如果锁被当前线程已持, 则立即返回, 且持有数+1;  
-如果锁被其他线程持有, 则当前线程进入等待队列;  
- 
-#### 公平锁#释放锁过程  
-ReentrantLock#unlock  
-AbstractQueuedSynchronizer#release  
-```
-public final boolean release(int arg) {
-    if (tryRelease(arg)) {
-        Node h = head;
-        if (h != null && h.waitStatus != 0)
-            unparkSuccessor(h);
-        return true;
-    }
-    return false;
-}
-```
 
 ### 参考  
 https://my.oschina.net/u/566591/blog/1557978  
@@ -662,11 +690,23 @@ https://blog.csdn.net/lsgqjh/article/details/63685058
 https://blog.csdn.net/u010942020/article/details/73310898  
 https://javadoop.com/2017/06/16/AbstractQueuedSynchronizer/  
 https://blog.csdn.net/javazejian/article/details/72828483  
-http://www.liuhaihua.cn/archives/518637.html  
-https://blog.csdn.net/liyantianmin/article/details/54673109  
+https://www.cnblogs.com/micrari/p/6937995.html  
+
+http://www.tianxiaobo.com/2018/05/07/Java-重入锁-ReentrantLock-原理分析/  
+http://www.tianxiaobo.com/2018/05/01/AbstractQueuedSynchronizer-原理分析-独占-共享模式/  
+http://www.cnblogs.com/micrari/p/6937995.html  
 https://blog.csdn.net/chen77716/article/details/6641477  
 http://ifeve.com/introduce-abstractqueuedsynchronizer/  
+http://ifeve.com/juc-aqs-reentrantlock/  
 https://www.cnblogs.com/zhanjindong/p/java-concurrent-package-aqs-AbstractQueuedSynchronizer.html  
+
+Condition  
+http://www.tianxiaobo.com/2018/05/04/AbstractQueuedSynchronizer-原理分析-Condition-实现原理/  
+http://www.cnblogs.com/micrari/p/7219751.html  
+
+抄袭-不好:  
+https://blog.csdn.net/liyantianmin/article/details/54673109  
+http://www.liuhaihua.cn/archives/518637.html  
 
 锁的分类  
 https://blog.csdn.net/qq_41931837/article/details/82314478  
