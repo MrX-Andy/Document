@@ -175,7 +175,6 @@ int SIGNAL = -1;
 线程的后继线程正在/已经被阻塞, 当该线程 release 或 cancel 时要重新这个后继线程(unpark);  
 后驱节点, 需要唤醒;  
 
-
 int CONDITION = -2;   
 表明该线程被处于条件队列, 就是因为调用了 Condition.await 而被阻塞;  
 
@@ -185,6 +184,8 @@ int PROPAGATE = -3;
 
 int waitStatus;   
 0, 新 Node 会处于这种状态;  
+取值为上面的 1, -1, -2, -3, 0;  
+大于 0 代表此线程取消了等待;  
 
 Node prev;   
 队列中某个 Node 的前驱 Node;  
@@ -287,7 +288,9 @@ AQS 主要做了三件事情:
 3.. 同步队列的维护;  
 
 #### 非公平锁#加锁过程   
-head-第一个排队的节点-第N个排队的节点-tail;  
+head-第一个排队的节点-第N个排队的节点(tail);  
+![队列的数据结构](ImageFiles/lock_002.png)  
+![非公平锁-加锁过程](ImageFiles/lock_001.png)  
 
 默认是非公平锁, NonfairSync;  
 加锁, 等待锁的过程;  
@@ -592,6 +595,7 @@ public final boolean release(int arg) {
         Node h = head;
         //  唤醒阻塞队列中的下一个等待的线程;  
         //  头结点不为空, 且不为等待状态;  
+        //  head节点状态不会是 CANCELLED, 所以这里 h.waitStatus != 0 相当于 h.waitStatus < 0
         if (h != null && h.waitStatus != 0)
             //  用 Unsafe.unpack 方法, 使当前线程可用, 此线程在 lock 时调用过 parkAndCheckInterrupt()方法进行 pack 处理;  
             unparkSuccessor(h);
@@ -647,6 +651,7 @@ private void unparkSuccessor(Node node) {
     if (s == null || s.waitStatus > 0) {
         s = null;
         //  如果下一个节点为空或者下一个节点的状态 > 0 (目前大于0就是取消状态)
+        //  从后往前遍历, 找到最前面的 waitStatus <=0 的节点;   
         for (Node t = tail; t != null && t != node; t = t.prev)
             //  就从队列的后面往前面找, 找到最前面一个 ws < 0 的, 但是又不是 head 的节点;  
             //  则从 tail 节点开始遍历找到离当前节点最近的且 waitStatus<=0(即非取消状态)的节点并唤醒
@@ -658,6 +663,10 @@ private void unparkSuccessor(Node node) {
         LockSupport.unpark(s.thread);
 }
 ```
+释放过程, 为什么不是从前往后遍历, 而是从后往前遍历?  
+假设是从前往后遍历, 那么可以在遍历的过程, 不断有新的节点排队到 tail, 那么会造成永远无法结束;  
+如果是从后往前遍历, tail 节点即时时刻, 是可知的, 而且 head 节点不会变;  
+
 #### Condition#wait-notifyAll  
 Condition 是一个接口, AbstractQueuedSynchronizer 中的 ConditionObject 内部类实现了这个接口, Condition 声明了一组等待/通知的方法,   
 这些方法的功能与 Object 中的 wait/notify/notifyAll 等方法相似,  
@@ -674,6 +683,7 @@ https://www.cnblogs.com/-new/p/7256297.html
 https://blog.csdn.net/fofabu2/article/details/78983767  
 
 原理  
+http://gee.cs.oswego.edu/dl/papers/aqs.pdf  
 https://blog.csdn.net/fuyuwei2015/article/details/72583010  
 https://blog.csdn.net/WeiJiFeng_/article/details/81390935  
 https://www.cnblogs.com/xrq730/p/4979021.html  
@@ -689,9 +699,8 @@ https://blog.csdn.net/javazejian/article/details/75043422
 https://blog.csdn.net/lsgqjh/article/details/63685058  
 https://blog.csdn.net/u010942020/article/details/73310898  
 https://javadoop.com/2017/06/16/AbstractQueuedSynchronizer/  
-https://blog.csdn.net/javazejian/article/details/72828483  
-https://www.cnblogs.com/micrari/p/6937995.html  
 
+https://www.cnblogs.com/micrari/p/6937995.html  
 http://www.tianxiaobo.com/2018/05/07/Java-重入锁-ReentrantLock-原理分析/  
 http://www.tianxiaobo.com/2018/05/01/AbstractQueuedSynchronizer-原理分析-独占-共享模式/  
 http://www.cnblogs.com/micrari/p/6937995.html  

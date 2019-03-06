@@ -2,7 +2,7 @@
 当多个线程访问一个类时, 如果不用考虑这些线程在运行时环境下的调度和交替运行, 并且不需要额外的同步及在调用方代码不必做其他的协调,    
 这个类的行为仍然是正确的, 那么这个类就是线程安全的;   
 
-[多线程架构图](basic/concurrent/ImageFiles/MT_001.png)  
+[多线程架构图](basic/concurrent/ImageFiles/mt_001.png)  
 [锁-锁的概念](basic/concurrent/concept_lock.md)  
 ### 示例代码  
 [线程安全与线程不安全 demo](basic/concurrent/sample/safe_unsafe.md)   
