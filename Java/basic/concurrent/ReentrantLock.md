@@ -499,6 +499,9 @@ private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
     return false;
 }
 ```
+在分析 shouldParkAfterFailedAcquire 方法, 我们可以得知:  
+每个 node 在入队的时候, 都会把前驱节点的状态改为 SIGNAL, 然后阻塞, 等待被前驱唤醒;  
+
 AbstractQueuedSynchronizer#parkAndCheckInterrupt  
 ```
 private final boolean parkAndCheckInterrupt() {
@@ -636,10 +639,11 @@ protected final boolean tryRelease(int releases) {
 AbstractQueuedSynchronizer#unparkSuccessor  
 ```
 //  唤醒 node
+//  从上面调用处知道, 参数 node 是 head 结点  
 private void unparkSuccessor(Node node) {
     //  获取等待状态
     int ws = node.waitStatus;
-    //  如果 ws < 0, 就将其变为 0
+    //  如果 head节点的 waitStatus<0, 将其修改为 0  
     //  如果状态小于 0, 把状态改成 0, 0 是空的状态, 因为当前节点的线程释放了锁后续不需要做任何操作, 不需要这个标志位,  
     // 即使 CAS 修改失败了也没关系, 其实这里如果只是对于锁来说根本不需要 CAS,   
     //  因为这个方法只会被释放锁的线程访问, 只不过 unparkSuccessor 这个方法是 AQS 里的方法,  
@@ -660,6 +664,7 @@ private void unparkSuccessor(Node node) {
                 s = t;
     }
     //  就把该节点唤醒;  
+    //  又回到这个方法了: acquireQueued, 这个时候, node 的前驱是 head 了;
     if (s != null)
         LockSupport.unpark(s.thread);
 }
@@ -668,6 +673,73 @@ private void unparkSuccessor(Node node) {
 假设是从前往后遍历, 那么可以在遍历的过程, 不断有新的节点排队到 tail, 那么会造成永远无法结束;  
 如果是从后往前遍历, tail 节点即时时刻, 是可知的, 而且 head 节点不会变;  
 
+#### 公平#非公平#加锁过程的区别   
+公平锁和非公平锁的区别, 仅仅是第一次调用 lock 的时候, 也就是第一次获取锁的时候,  
+线程执行到 lock.lock(), 公平锁, 直接去申请锁, 申请之前, 先检查如果有其他线程在排队等锁, 当前线程直接去排队, 如果没人排队, 再尝试去申请锁;  
+线程执行到 lock.lock(), 非公平锁, 先去抢一下锁, 如果抢不到, 去申请锁, 申请失败再排队;  
+ 
+公平#非公平#加锁过程的区别.1 
+ReentrantLock.FairSync#lock  
+```
+final void lock() {
+	//  申请锁  
+	acquire(1);
+}
+```
+ReentrantLock.NonfairSync#lock   
+```
+final void lock() {
+	//  先抢一下, 试一试;  
+	if (compareAndSetState(0, 1))
+		setExclusiveOwnerThread(Thread.currentThread());
+	else
+		//  申请锁  
+		acquire(1);
+}
+```
+
+公平#非公平#加锁过程的区别.2 
+ReentrantLock.FairSync#tryAcquire  
+```
+protected final boolean tryAcquire(int acquires) {
+		final Thread current = Thread.currentThread();
+		int c = getState();
+		if (c == 0) {
+			//  先检查有没有 前驱节点, 有没有人已经在排队了;  
+			//  再去申请锁;  
+			if (!hasQueuedPredecessors() &&
+				compareAndSetState(0, acquires)) {
+				setExclusiveOwnerThread(current);
+				return true;
+			}
+		}
+		//  代码逻辑一样  
+		return false;
+	}
+}
+```
+ReentrantLock.NonfairSync#tryAcquire  
+```
+protected final boolean tryAcquire(int acquires) {
+	return nonfairTryAcquire(acquires);
+}
+```
+ReentrantLock.Sync#nonfairTryAcquire  
+```
+final boolean nonfairTryAcquire(int acquires) {
+	final Thread current = Thread.currentThread();
+	int c = getState();
+	if (c == 0) {
+		//  直接去申请锁;  
+		if (compareAndSetState(0, acquires)) {
+			setExclusiveOwnerThread(current);
+			return true;
+		}
+	}
+	//  代码逻辑一样  
+	return false;
+}
+```
 #### Condition#wait-notifyAll  
 Condition 是一个接口, AbstractQueuedSynchronizer 中的 ConditionObject 内部类实现了这个接口, Condition 声明了一组等待/通知的方法,   
 这些方法的功能与 Object 中的 wait/notify/notifyAll 等方法相似,  
@@ -701,6 +773,11 @@ https://blog.csdn.net/lsgqjh/article/details/63685058
 https://blog.csdn.net/u010942020/article/details/73310898  
 https://javadoop.com/2017/06/16/AbstractQueuedSynchronizer/  
 https://javadoop.com/post/AbstractQueuedSynchronizer  
+https://javadoop.com/post/AbstractQueuedSynchronizer-2  
+https://javadoop.com/post/AbstractQueuedSynchronizer-3  
+https://blog.csdn.net/zs064811/article/details/76996727  
+https://blog.csdn.net/pfnie/article/details/53191892  
+
 
 https://www.cnblogs.com/micrari/p/6937995.html  
 http://www.tianxiaobo.com/2018/05/07/Java-重入锁-ReentrantLock-原理分析/  
