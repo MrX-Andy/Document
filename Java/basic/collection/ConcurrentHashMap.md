@@ -1,37 +1,33 @@
-### ConcurrentHashMap    
+ConcurrentHashMap 是由 Segment 数组结构和 HashEntry 数组结构组成;  
+Segment 是一种可重入锁(ReentrantLock), 在 ConcurrentHashMap 里扮演锁的角色, HashEntry 则用于存储键值对数据;  
+一个 ConcurrentHashMap 里包含一个 Segment 数组, Segment 的结构和 HashMap 类似, 是一种数组和链表结构;  
+一个 Segment 里包含一个 HashEntry 数组, 每个 HashEntry 是一个链表结构的元素,   
+每个 Segment 守护着一个 HashEntry 数组里的元素, 当对 HashEntry 数组的数据进行修改时, 必须首先获得与它对应的 Segment 锁;  
 
-ConcurrentHashMap是由Segment数组结构和HashEntry数组结构组成。  
-Segment是一种可重入锁（ReentrantLock），在ConcurrentHashMap里扮演锁的角色；HashEntry则用于存储键值对数据。  
-一个ConcurrentHashMap里包含一个Segment数组。Segment的结构和HashMap类似，是一种数组和链表结构。  
-一个Segment里包含一个HashEntry数组，每个HashEntry是一个链表结构的元素，  
-每个Segment守护着一个HashEntry数组里的元素，当对HashEntry数组的数据进行修改时，必须首先获得与它对应的Segment锁，  
-◆ 锁分段技术  
-ConcurrentHashMap由多个Segment组成(Segment下包含很多Node，也就是我们的键值对了)，每个Segment都有把锁来实现线程安全，  
-当一个线程占用锁访问其中一个段数据的时候，其他段的数据也能被其他线程访问。  
+锁分段技术  
+ConcurrentHashMap 由多个 Segment 组成, Segment下包含很多 Node, 就是键值对, 每个 Segment 都有一个锁来实现线程安全,   
+当一个线程占用锁访问其中一个段数据的时候, 其他段的数据也能被其他线程访问;  
 ### 几个常量的解释  
-####  sizeCtl含义  
+sizeCtl含义  
 private transient volatile int sizeCtl;  
-负数代表正在进行初始化或扩容操作  
--1代表正在初始化    
--N 表示有N-1个线程正在进行扩容操作  
-正数或0代表hash表还没有被初始化，这个数值表示初始化或下一次进行扩容的大小，这一点类似于扩容阈值的概念。  
-还后面可以看到，它的值始终是当前ConcurrentHashMap容量的0.75倍，这与loadfactor是对应的。  
+负数代表正在进行初始化或扩容操作;  
+-1 代表正在初始化;  
+-N 表示有 N-1 个线程正在进行扩容操作;  
+正数或 0 代表 hash 表还没有被初始化, 这个数值表示初始化或下一次进行扩容的大小, 这一点类似于扩容阈值的概念;  
+还后面可以看到, 它的值始终是当前 ConcurrentHashMap 容量的 0.75 倍, 这与 loadfactor 是对应的;  
 
-### CAS  
-在ConcurrentHashMap中，大量使用了U.compareAndSwapXXX的方法，这个方法是利用一个CAS算法实现无锁化的修改值的操作，他可以大大降低锁代理的性能消耗。   
-这个算法的基本思想就是不断地去比较当前内存中的变量值与你指定的一个变量值是否相等，如果相等，则接受你指定的修改的值，否则拒绝你的操作。  
-因为当前线程中的值已经不是最新的值，你的修改很可能会覆盖掉其他线程修改的结果。这一点与乐观锁，SVN的思想是比较类似的。  
-unsafe代码块控制了一些属性的修改工作，比如最常用的SIZECTL 。 在这一版本的concurrentHashMap中，大量应用来的CAS方法进行变量、属性的修改工作。   
-利用CAS进行无锁操作，可以大大提高性能。    
+CAS  
+在 ConcurrentHashMap 中, 大量使用了 U.compareAndSwapXXX 的方法, 这个方法是利用一个 CAS 算法实现无锁化的修改值的操作, 他可以大大降低锁代理的性能消耗;   
 [扩容函数 transfer](ConcurrentHashMap/fun_transfer.md)  
+
 ### spread  
-再次hash，hash值均匀分布，减少hash冲突；    
+再次hash, hash值均匀分布, 减少hash冲突;    
 ● 无符号右移  
-各个位向右移指定的位数。右移后左边突出的位用零来填充。移出右边的位被丢弃  
+各个位向右移指定的位数;右移后左边突出的位用零来填充;移出右边的位被丢弃  
 ```
 static final int HASH_BITS = 0x7fffffff; // usable bits of normal node hash   //01111111_11111111_11111111_11111111
 static final int spread(int h) {
-    //  无符号右移加入高位影响，& HASH_BITS用于把hash值转化为正数，负数hash是有特别的作用的   
+    //  无符号右移加入高位影响, & HASH_BITS用于把hash值转化为正数, 负数hash是有特别的作用的   
     return (h ^ (h >>> 16)) & HASH_BITS;
 }
 ```
@@ -39,19 +35,19 @@ static final int spread(int h) {
 如果没有初始化就先调用initTable（）方法来进行初始化过程  
 如果没有hash冲突就直接CAS插入  
 如果还在进行扩容操作就先进行扩容  
-如果存在hash冲突，就加锁来保证线程安全，这里有两种情况，一种是链表形式就直接遍历到尾端插入，一种是红黑树就按照红黑树结构插入，  
-最后一个如果该链表的数量大于阈值8，就要先转换成黑红树的结构，break再一次进入循环  
-如果添加成功就调用addCount（）方法统计size，并且检查是否需要扩容  
+如果存在hash冲突, 就加锁来保证线程安全, 这里有两种情况, 一种是链表形式就直接遍历到尾端插入, 一种是红黑树就按照红黑树结构插入,   
+最后一个如果该链表的数量大于阈值8, 就要先转换成黑红树的结构, break再一次进入循环  
+如果添加成功就调用addCount（）方法统计size, 并且检查是否需要扩容  
 ```
 final V putVal(K key, V value, boolean onlyIfAbsent) {
     if (key == null || value == null) throw new NullPointerException();
-    int hash = spread(key.hashCode());  //  再次hash，hash值均匀分布，减少hash冲突；    
+    int hash = spread(key.hashCode());  //  再次hash, hash值均匀分布, 减少hash冲突;    
     int binCount = 0;
     for (Node<K,V>[] tab = table;;) {
         Node<K,V> f; int n, i, fh; K fk; V fv;
         if (tab == null || (n = tab.length) == 0)
-            tab = initTable();  //  如果hash表为空，初始化hash表  initTable；
-        else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {  //  如果hash值对应的位置，没有数据，直接将value放进去，结束 putVal；
+            tab = initTable();  //  如果hash表为空, 初始化hash表  initTable;
+        else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {  //  如果hash值对应的位置, 没有数据, 直接将value放进去, 结束 putVal;
             if (casTabAt(tab, i, null, new Node<K,V>(hash, key, value)))
                 break;                   // no lock when adding to empty bin
         }
@@ -59,7 +55,7 @@ final V putVal(K key, V value, boolean onlyIfAbsent) {
             tab = helpTransfer(tab, f);
         else if (onlyIfAbsent && fh == hash &&  // check first node
                  ((fk = f.key) == key || fk != null && key.equals(fk)) &&
-                 (fv = f.val) != null)      //  key value都存在，表示重复， 结束 putVal；
+                 (fv = f.val) != null)      //  key value都存在, 表示重复,  结束 putVal;
             return fv;
         else {
             V oldVal = null;
@@ -73,12 +69,12 @@ final V putVal(K key, V value, boolean onlyIfAbsent) {
                                 ((ek = e.key) == key ||
                                  (ek != null && key.equals(ek)))) {
                                 oldVal = e.val;
-                                if (!onlyIfAbsent)  //  key相同，替换原先的value
+                                if (!onlyIfAbsent)  //  key相同, 替换原先的value
                                     e.val = value;
                                 break;
                             }
                             Node<K,V> pred = e;
-                            if ((e = e.next) == null) {  //  在链表尾，插入新的节点  
+                            if ((e = e.next) == null) {  //  在链表尾, 插入新的节点  
                                 pred.next = new Node<K,V>(hash, key, value);
                                 break;
                             }
@@ -87,7 +83,7 @@ final V putVal(K key, V value, boolean onlyIfAbsent) {
                     else if (f instanceof TreeBin) {  //  如果是 树节点
                         Node<K,V> p;
                         binCount = 2; 
-                        // 插入节点，并旋转红黑树  
+                        // 插入节点, 并旋转红黑树  
                         if ((p = ((TreeBin<K,V>)f).putTreeVal(hash, key,
                                                        value)) != null) {
                             oldVal = p.val;
@@ -100,7 +96,7 @@ final V putVal(K key, V value, boolean onlyIfAbsent) {
                 }
             }
             if (binCount != 0) {
-                if (binCount >= TREEIFY_THRESHOLD)  //  同一个 hash位置，链表的长度 >=8  就要树化
+                if (binCount >= TREEIFY_THRESHOLD)  //  同一个 hash位置, 链表的长度 >=8  就要树化
                     treeifyBin(tab, i);
                 if (oldVal != null)
                     return oldVal;
@@ -108,7 +104,7 @@ final V putVal(K key, V value, boolean onlyIfAbsent) {
             }
         }
     }
-    addCount(1L, binCount);  //  统计size，并且检查是否需要扩容
+    addCount(1L, binCount);  //  统计size, 并且检查是否需要扩容
     return null;
 }
 ```
@@ -117,10 +113,10 @@ final V putVal(K key, V value, boolean onlyIfAbsent) {
 ```
 private final Node<K,V>[] initTable() {
     Node<K,V>[] tab; int sc;
-    while ((tab = table) == null || tab.length == 0) {   //  hash表为空，进行初始化  
-        if ((sc = sizeCtl) < 0)  //  sizeCtl<0表示其他线程已经在初始化了或者扩容了，挂起当前线程 
+    while ((tab = table) == null || tab.length == 0) {   //  hash表为空, 进行初始化  
+        if ((sc = sizeCtl) < 0)  //  sizeCtl<0表示其他线程已经在初始化了或者扩容了, 挂起当前线程 
             Thread.yield(); // lost initialization race; just spin
-        else if (U.compareAndSetInt(this, SIZECTL, sc, -1)) {  //  CAS操作SIZECTL为-1，表示初始化状态  
+        else if (U.compareAndSetInt(this, SIZECTL, sc, -1)) {  //  CAS操作SIZECTL为-1, 表示初始化状态  
             try {
                 if ((tab = table) == null || tab.length == 0) {
                     int n = (sc > 0) ? sc : DEFAULT_CAPACITY;
@@ -164,7 +160,7 @@ final Node<K,V>[] helpTransfer(Node<K,V>[] tab, Node<K,V> f) {
 ```
 private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
     int n = tab.length, stride;
-    //  每核处理的量小于16，则强制赋值16
+    //  每核处理的量小于16, 则强制赋值16
     if ((stride = (NCPU > 1) ? (n >>> 3) / NCPU : n) < MIN_TRANSFER_STRIDE)
         stride = MIN_TRANSFER_STRIDE; // subdivide range
     if (nextTab == null) {            // initiating
@@ -180,9 +176,9 @@ private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
         transferIndex = n;
     }
     int nextn = nextTab.length;
-    //  连接点指针，用于标志位（fwd的hash值为-1，fwd.nextTable=nextTab）
+    //  连接点指针, 用于标志位（fwd的hash值为-1, fwd.nextTable=nextTab）
     ForwardingNode<K,V> fwd = new ForwardingNode<K,V>(nextTab);
-    boolean advance = true;  //  当advance == true时，表明该节点已经处理过了
+    boolean advance = true;  //  当advance == true时, 表明该节点已经处理过了
     boolean finishing = false; // to ensure sweep before committing nextTab
     for (int i = 0, bound = 0;;) {
         Node<K,V> f; int fh;
@@ -213,7 +209,7 @@ private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
                 sizeCtl = (n << 1) - (n >>> 1);  //  sizeCtl阈值为原来的1.5倍  
                 return;
             }
-            //  CAS 更扩容阈值，在这里面sizectl值减一，说明新加入一个线程参与到扩容操作
+            //  CAS 更扩容阈值, 在这里面sizectl值减一, 说明新加入一个线程参与到扩容操作
             if (U.compareAndSetInt(this, SIZECTL, sc = sizeCtl, sc - 1)) {
                 if ((sc - 2) != resizeStamp(n) << RESIZE_STAMP_SHIFT)
                     return;
@@ -221,10 +217,10 @@ private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
                 i = n; // recheck before commit
             }
         }
-        //  遍历的节点为null，则放入到ForwardingNode 指针节点
+        //  遍历的节点为null, 则放入到ForwardingNode 指针节点
         else if ((f = tabAt(tab, i)) == null)
             advance = casTabAt(tab, i, null, fwd);
-        //  f.hash == -1 表示遍历到了ForwardingNode节点，意味着该节点已经处理过了
+        //  f.hash == -1 表示遍历到了ForwardingNode节点, 意味着该节点已经处理过了
         //  这里是控制并发扩容的核心
         else if ((fh = f.hash) == MOVED)
             advance = true; // already processed
@@ -264,10 +260,10 @@ private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
                         setTabAt(nextTab, i + n, hn);
                         //  在table i 位置处插上ForwardingNode 表示该节点已经处理过了
                         setTabAt(tab, i, fwd);
-                        //  advance = true 可以执行--i动作，遍历节点
+                        //  advance = true 可以执行--i动作, 遍历节点
                         advance = true;
                     }
-                    //  如果是TreeBin，则按照红黑树进行处理，处理逻辑与上面一致
+                    //  如果是TreeBin, 则按照红黑树进行处理, 处理逻辑与上面一致
                     else if (f instanceof TreeBin) {
                         TreeBin<K,V> t = (TreeBin<K,V>)f;
                         TreeNode<K,V> lo = null, loTail = null;
@@ -294,7 +290,7 @@ private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
                                 ++hc;
                             }
                         }
-                        //  扩容后树节点个数若<=6，将树转链表
+                        //  扩容后树节点个数若<=6, 将树转链表
                         ln = (lc <= UNTREEIFY_THRESHOLD) ? untreeify(lo) :
                             (hc != 0) ? new TreeBin<K,V>(lo) : t;
                         hn = (hc <= UNTREEIFY_THRESHOLD) ? untreeify(hi) :
@@ -316,8 +312,8 @@ private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
 private final void treeifyBin(Node<K,V>[] tab, int index) {
     Node<K,V> b; int n;
     if (tab != null) {
-        //  如果整个table的数量小于64，就扩容至原来的一倍，不转红黑树了
-        //  因为这个阈值扩容可以减少hash冲突，不必要去转红黑树
+        //  如果整个table的数量小于64, 就扩容至原来的一倍, 不转红黑树了
+        //  因为这个阈值扩容可以减少hash冲突, 不必要去转红黑树
         if ((n = tab.length) < MIN_TREEIFY_CAPACITY)
             tryPresize(n << 1);
         else if ((b = tabAt(tab, index)) != null && b.hash >= 0) {
@@ -348,12 +344,12 @@ private final void treeifyBin(Node<K,V>[] tab, int index) {
 ```
 private final void addCount(long x, int check) {
     CounterCell[] as; long b, s;
-    //  更新baseCount，table的数量，counterCells表示元素个数的变化
+    //  更新baseCount, table的数量, counterCells表示元素个数的变化
     if ((as = counterCells) != null ||
         !U.compareAndSetLong(this, BASECOUNT, b = baseCount, s = b + x)) {
         CounterCell a; long v; int m;
         boolean uncontended = true;
-        //  如果多个线程都在执行，则CAS失败，执行fullAddCount，全部加入count
+        //  如果多个线程都在执行, 则CAS失败, 执行fullAddCount, 全部加入count
         if (as == null || (m = as.length - 1) < 0 ||
             (a = as[ThreadLocalRandom.getProbe() & m]) == null ||
             !(uncontended =
@@ -399,10 +395,10 @@ public V get(Object key) {
             if ((ek = e.key) == key || (ek != null && key.equals(ek)))
                 return e.val;
         }
-        //  hash值为负值表示正在扩容，这个时候查的是ForwardingNode的find方法来定位到nextTable来查找，查找到就返回
+        //  hash值为负值表示正在扩容, 这个时候查的是ForwardingNode的find方法来定位到nextTable来查找, 查找到就返回
         else if (eh < 0)
             return (p = e.find(h, key)) != null ? p.val : null;
-        while ((e = e.next) != null) {  //  既不是首节点也不是ForwardingNode，那就往下遍历
+        while ((e = e.next) != null) {  //  既不是首节点也不是ForwardingNode, 那就往下遍历
             if (e.hash == h &&
                 ((ek = e.key) == key || (ek != null && key.equals(ek))))
                 return e.val;
@@ -411,13 +407,6 @@ public V get(Object key) {
     return null;
 }
 ```
-
-### 名词解释  
-◑ CAS算法   
-CAS(Compare And Swap)，  
-unsafe.compareAndSwapInt(this, valueOffset, expect, update);   
-意思是如果valueOffset位置包含的值与expect值相同，则更新valueOffset位置的值为update，并返回true，否则不更新，返回false。  
-
 
 ### 参考  
 http://www.importnew.com/22007.html  

@@ -749,7 +749,6 @@ Condition 是一个接口, AbstractQueuedSynchronizer 中的 ConditionObject 内
 
 ### 参考  
 https://my.oschina.net/u/566591/blog/1557978  
-https://www.cnblogs.com/xrq730/p/4979021.html  
 https://juejin.im/entry/5c516476f265da61736aab3e  
 https://www.cnblogs.com/-new/p/7256297.html  
 性能比较  

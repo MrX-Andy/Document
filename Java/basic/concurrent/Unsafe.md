@@ -28,6 +28,10 @@ newValue: 新值;
 */
 public native boolean compareAndSwapInt(Object obj, long offset, int expect, int update);
 ```
+
+unsafe.compareAndSwapInt(this, valueOffset, expect, update);   
+意思是如果 valueOffset 位置包含的值与 expect 值相同, 则更新 valueOffset 位置的值为 update, 并返回 true, 否则不更新, 返回 false;  
+
 ### 参考  
 https://www.jb51.net/article/136718.htm  
 https://juejin.im/post/5c7a86d2f265da2d8e7101a1  
