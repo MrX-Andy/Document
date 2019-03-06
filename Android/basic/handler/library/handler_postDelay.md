@@ -20,6 +20,7 @@ MessageQueue会根据post delay的时间排序放入到链表中，链表头的�
 如果更短则，放入链表头，并且看时间是否有delay，  如果有，则block，等待时间到来唤醒执行，否则将唤醒立即执行。    
 所以handler.postDelay并不是先等待一定的时间再放入到MessageQueue中，而是直接进入MessageQueue，以MessageQueue的时间顺序排列和唤醒的方式结合实现的。  
 ### 版本2
+postDelay 用的时间是 SystemClock#uptimeMillis 就是 boot time, 就是 开机的定时器;    
 postDelay()一个10秒钟的Runnable A、消息进队，MessageQueue调用nativePollOnce()阻塞，Looper阻塞；  
 紧接着post()一个Runnable B、消息进队，判断现在A时间还没到、正在阻塞，把B插入消息队列的头部（A的前面），然后调用nativeWake()方法唤醒线程；  
 MessageQueue.next()方法被唤醒后，重新开始读取消息链表，第一个消息B无延时，直接返回给Looper；  

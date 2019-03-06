@@ -473,8 +473,9 @@ private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
          * to signal it, so it can safely park.
          */
         return true;
-    //  如果线程前驱的等待状态大于 0, 即是 1 CANCELLED 就把前面的等待状态为 1 的删了, 删到直到不为 1;  
-    //  前置节点如果已经被取消了, 则一直往前遍历直到前置节点不是取消状态, 与此同时会修改链表关系;  
+    //  如果线程前驱的等待状态大于 0, 即是 1 CANCELLED , 说明前驱节点取消了排队;  
+    //  就把前面的等待状态为  1 的删掉, 删除直到不为 1, 找到 waitStatus <=1 的节点, 依赖它唤醒当前节点;  
+    //  这样同时也会修改链表关系;  
     if (ws > 0) {
         /*
          * Predecessor was cancelled. Skip over predecessors and
@@ -485,13 +486,13 @@ private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
         } while (pred.waitStatus > 0);
         pred.next = node;
     } else {
-         // ws 只有 1, 0, -1, -2, -3
-        // 1, -1处理了, 前面没有对 waitStatus 做操作
-        // 那么只剩 0 了, 前驱的节点的 ws 设置为 -1  
-        // 在之前图表示的时候, 为 -1 是执行状态, 但这种状态是阻塞状态;  
-        // 直到前一个线程释放了锁, 才能使执行状态
-        //  前置节点是 0 或者 propagate 状态, 这里通过 CAS 把前置节点状态改成 signal; 
-        //  这里不返回 true 让当前节点阻塞, 而是返回 false, 目的是让调用者再 check 一下当前线程是否能成功获取锁;  
+         //  ws 只有 1, 0, -1, -2, -3
+         //  前驱节点的waitStatus不等于 -1 和 1, 那也就是只可能是 0, -2, -3; 
+         //  在我们前面的源码中, 都没有设置 waitStatus, 所以每个新的 node 入队时, waitStatu 都是 0;   
+        //  那么只剩 0 了, 前驱的节点的 ws 设置为 -1  
+        //  在之前图表示的时候, 为 -1 是执行状态, 但这种状态是阻塞状态;  
+        //  直到前一个线程释放了锁, 才能使执行状态
+        //  这里不返回 true 让当前节点阻塞, 而是返回 false, 因为有可能 node 会变成 head 的后驱节点, 所以要让调用者再 check 一下当前线程是否能成功获取锁;  
         //  失败的话再阻塞;  
         compareAndSetWaitStatus(pred, ws, Node.SIGNAL);
     }
@@ -699,6 +700,7 @@ https://blog.csdn.net/javazejian/article/details/75043422
 https://blog.csdn.net/lsgqjh/article/details/63685058  
 https://blog.csdn.net/u010942020/article/details/73310898  
 https://javadoop.com/2017/06/16/AbstractQueuedSynchronizer/  
+https://javadoop.com/post/AbstractQueuedSynchronizer  
 
 https://www.cnblogs.com/micrari/p/6937995.html  
 http://www.tianxiaobo.com/2018/05/07/Java-重入锁-ReentrantLock-原理分析/  

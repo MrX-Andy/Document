@@ -32,6 +32,8 @@ HashMap hash 值重复的地方, 之前是链表存储, 为什么要做树化?
 
 对象的比较, equals 和 hashCode, 如果, 只重写了 equals, 没有重写 hashCode, a1==a2, 这样的运算, 系统会怎么处理, 为什么?   
 hashCode 的重写规则, 哪些时候, 会用到 hashCode, 简单说一下;  
+
+ClassLoader 加载原理;  
 ### Java  
 ConcurrentHashMap;  
 TreeMap;  
