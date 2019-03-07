@@ -3,7 +3,7 @@ Application, Activity 启动的时候, 不能有过多的操作, 如果需要耗
 尽量多处理异常, 保障应用不会出现 crash;  
 网络请求之前, 先判断 网络是否通路,  否则不发起请求;  
 大一点的对象, array, list, map, 在不用的时候, 需要及时clear;  
-使用上下文相关, 可以结合 弱引用;  
+使用上下文相关, 可以结合弱引用;  
 广播, EventBus 之类的, 也要及时解除注册;  
 最好不要静态持有 Activity, 或者有 较长生命周期的对象, 不要持有较短生命周期的对象引用, 会造成内存泄漏;  
 在onStop 或者 onPause 暂停  
@@ -12,10 +12,34 @@ Application, Activity 启动的时候, 不能有过多的操作, 如果需要耗
 对于一些 sensors 如gps监听等, 也许要暂停;
 ```  
 对于 Bitmap 或者本地的 Drawable, 最好先压缩处理再展示, 或者用 Glide等开源框架做处理;  
-组合控件, 自定义控件,  使用 merge 优化层级结构;  
 循环语句里面, 不要重复造对象的引用, 字符串拼接最好要使用 StringBuild;  
 HashMap, ArrayList 初始化时, 最好预估计其容量, 扩容也是比较耗时的;
+自定义 view, 不要再 onDraw 中, 频繁初始化对象, 不要做耗时操作, 因为 onDraw 方法可能会经常被调用;  
+移除默认的 window 背景色, 移除控件中不必要的背景色, 减少 view 的层级关系, 换一种实现方案, 减少 view 的层级;  
+组合控件, 自定义控件,  使用 merge 优化层级结构;  
+使用 ViewStub, 优化加载时机, 只有当 ViewStub 调用了ViewStub.inflate()时, ViewStub 所指向的布局文件才会被 inflate , 实例化, 最终 显示 <ViewStub> 指向的布局;  
+布局简单时, 使用 FrameLayout-LinearLayout, 布局复杂时, 使用 RelativeLayout-ConstraintLayout;  
+使用 include 提高布局的复用性, 优化测量和绘制的时间;  
+尽量少使用 wrap_content, 减少 measure 时, 协商测量的时间;  
 
+
+```
+<item name="android:windowBackground">@android:color/transparent</item>
+或者 
+<item name="android:windowBackground">@null</item>
+
+getWindow().setBackgroundDrawable(null);
+或者  
+getWindow().setBackgroundDrawableResource(android.R.color.transparent);  
+```
+原色: 没有过度绘制  
+蓝色: 过度绘制 1 次   
+绿色: 过度绘制 2 次  
+粉色: 过度绘制 3 次  
+红色: 过度绘制 4 次或更多  
+
+代码混淆:  
+移除不必要的库, 类, 方法, 
 ### IdleHandler  
 ```
 // 将费时的不紧急的事务放到IdleHandler中执行
@@ -187,6 +211,38 @@ if (BuildConfig.DEBUG) {
             .penaltyLog().build());
 }
 ```
+### 性能优化工具  
+Systrace  
+Android 4.1 以上版本提供的性能数据采样 & 分析工具;  
+检测 Android 系统各个组件随着时间的运行状态 & 提供解决方案;  
+收集和检测事件信息, FPS-代码耗时;  
+收集运行信息, 从而帮助开发者更直观地分析系统瓶颈, 改进性能;  
+检测范围包括, Android 关键子系统, 如 WindowManagerService 等 Framework 部分关键模块, 服务, View 系统;  
+跟踪系统的 I/O 操作, 内核工作队列, CPU 负载等, 在 UI 显示性能分析上提供很好的数据, 特别是在动画播放不流畅, 渲染卡等问题上;  
+
+Hierarchy Viewer  
+查看布局层级, 过度绘制检测, FPS, 方便查看 Activity 布局, 各个 View 的属性, 布局测量-布局-绘制的时间;  
+TraceView: 图形化的代码执行时间分析工具, FPS-代码耗时;  
+LeakCanary: 内存泄漏检测;  
+Lint: 隐藏问题检测, 降低 cash 率;  
+
+Profile GPU Rendering  
+一个 图形监测工具, 渲染, 绘制性能追踪, 能实时反应当前绘制的耗时,  
+横轴 = 时间, 纵轴 = 每帧的耗时, 随着时间推移, 从左到右的刷新呈现;  
+提供一个标准的耗时, 如果高于标准耗时, 就表示当前这一帧丢失;  
+
+MAT(Memory Analysis Tools)  
+一个 Eclipse 的 Java Heap 内存分析工具,  查看当前内存占用情况,   
+通过分析 Java 进程的内存快照 HPROF 分析, 快速计算出在内存中对象占用的大小, 查看哪些对象不能被垃圾收集器回收, 可通过视图直观地查看可能造成这种结果的对象;  
+
+Memory Monitor  
+Heap Viewer  
+一个的 Java Heap 内存分析工具, 查看当前内存快照;  
+可查看 分别有哪些类型的数据在堆内存总 & 各种类型数据的占比情况;  
+
+Allocation Tracker  
+一个内存追踪分析工具, 追踪内存分配信息，按顺序排列  
+
 ### 参考  
 https://www.jianshu.com/p/f5514b1a826c  
 https://www.jianshu.com/p/4f44a178c547  
@@ -200,7 +256,9 @@ https://www.jianshu.com/p/99f3c09982d4
 https://www.jianshu.com/p/5f99f0e51118  
 https://www.jianshu.com/p/7eb182df06d3  
 https://www.jianshu.com/p/f3d90be42719  
-
+https://juejin.im/post/5c6b97e96fb9a049c85005c9  
+https://blog.csdn.net/carson_ho/article/details/79549417  
+https://blog.csdn.net/carson_ho/article/details/79674623  
 https://chinagdg.org/google-videos/?vid=XMTQ5ODk1Njk4NA==&plid=26876905  
 https://chinagdg.org/google-videos/?vid=XMTI2NDk2ODY2MA==&plid=23758799  
 https://chinagdg.org/google-videos/?vid=XMTMxNDE5MjQwNA==&plid=25972284  
@@ -232,3 +290,22 @@ https://www.jianshu.com/p/bef74a4b6d5e
 
 启动时间  
 https://www.jianshu.com/p/59a2ca7df681  
+
+Profile GPU Rendering  
+https://www.jianshu.com/p/061bb80025c7  
+
+Systrace  
+http://gityuan.com/2016/01/17/systrace/  
+
+MAT  
+https://www.eclipse.org/mat/  
+https://blog.csdn.net/itomge/article/details/48719527  
+
+Heap Viewer  
+https://blog.csdn.net/zhangfei2018/article/details/49154479  
+
+Allocation Tracker  
+https://www.kancloud.cn/digest/itfootballprefermanc/100908  
+
+Memory Monitor  
+https://blog.csdn.net/true100/article/details/52604910  
