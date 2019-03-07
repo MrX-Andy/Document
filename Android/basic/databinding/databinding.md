@@ -2,6 +2,7 @@
 
 [dataBinding 结合 kotlin 报错问题](library/databinding_kotlin_config_conflict.md)   
 [关于DataBinding、Kotlin的配置](library/kotlin_databinding_gradle.md)  
+[dataBinding原理](library/databinding_principle.md)  
 [常用知识点总结](sample/databinding_02.md)  
 [单向数据绑定](sample/databinding_01.md)  
 [双向数据绑定 Observable](sample/databinding_03.md)  
@@ -12,7 +13,7 @@
 [生命周期 OnLifecycleEvent 源码分析](library/lifecycle_01.md)   
 [为什么dataBinding.viewId的性能会优于 findViewById ](library/findViewById.md)   
 
-◆ DataBinding教程  
+### 参考  
 [版本号]    https://developer.android.google.cn/topic/libraries/architecture/adding-components#lifecycle  
 https://developer.android.com/topic/libraries/data-binding/  
 https://developer.android.google.cn/topic/libraries/data-binding/index.html  

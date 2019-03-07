@@ -202,5 +202,7 @@ http://www.jianshu.com/p/aa017a3ddc40
 http://www.jianshu.com/p/e2f75c8cce01  
 http://blog.csdn.net/lianhuazy167/article/details/66967698  
 
-hash 索引计算  
+hash 索引计算-扰动函数  
 https://www.cnblogs.com/zhengwang/p/8136164.html  
+https://my.oschina.net/u/232911/blog/2254278  
+
