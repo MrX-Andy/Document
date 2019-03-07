@@ -1,20 +1,26 @@
-ConcurrentHashMap 是由 Segment 数组结构和 HashEntry 数组结构组成;  
-Segment 是一种可重入锁(ReentrantLock), 在 ConcurrentHashMap 里扮演锁的角色, HashEntry 则用于存储键值对数据;  
-一个 ConcurrentHashMap 里包含一个 Segment 数组, Segment 的结构和 HashMap 类似, 是一种数组和链表结构;  
-一个 Segment 里包含一个 HashEntry 数组, 每个 HashEntry 是一个链表结构的元素,   
-每个 Segment 守护着一个 HashEntry 数组里的元素, 当对 HashEntry 数组的数据进行修改时, 必须首先获得与它对应的 Segment 锁;  
+Node<K,V>[] table;  
+ConcurrentHashMap 在 java8 已经摒弃了 Segment 的概念, 而是直接使用 Node 数组+链表+红黑树的数据结构来实现;  
+使用 synchronized 和 CAS 控制并发操作;  
 
-锁分段技术  
-ConcurrentHashMap 由多个 Segment 组成, Segment下包含很多 Node, 就是键值对, 每个 Segment 都有一个锁来实现线程安全,   
-当一个线程占用锁访问其中一个段数据的时候, 其他段的数据也能被其他线程访问;  
-### 几个常量的解释  
-sizeCtl含义  
+### 名词解释  
 private transient volatile int sizeCtl;  
 负数代表正在进行初始化或扩容操作;  
 -1 代表正在初始化;  
 -N 表示有 N-1 个线程正在进行扩容操作;  
-正数或 0 代表 hash 表还没有被初始化, 这个数值表示初始化或下一次进行扩容的大小, 这一点类似于扩容阈值的概念;  
-还后面可以看到, 它的值始终是当前 ConcurrentHashMap 容量的 0.75 倍, 这与 loadfactor 是对应的;  
+0 代表 hash 表还没有被初始化;  
+当为正数时, 表示初始化或者下一次进行扩容的大小;  
+
+private static final int MAX_RESIZERS = (1 << (32 - RESIZE_STAMP_BITS)) - 1;  
+2^15-1，help resize的最大线程数  
+
+private static final int RESIZE_STAMP_SHIFT = 32 - RESIZE_STAMP_BITS;  
+32-16=16，sizeCtl中记录size大小的偏移量;  
+
+ForwardingNode  
+一个特殊的 Node 节点, hash 值为 -1, 其中存储 nextTable 的引用, 只有 table 发生扩容的时候, ForwardingNode 才会发挥作用;  
+作为一个占位符放在 table 中表示当前节点为 null 或则已经被移动;  
+
+
 
 CAS  
 在 ConcurrentHashMap 中, 大量使用了 U.compareAndSwapXXX 的方法, 这个方法是利用一个 CAS 算法实现无锁化的修改值的操作, 他可以大大降低锁代理的性能消耗;   
@@ -32,7 +38,7 @@ CAS
 
 ### spread  
 再次hash, hash值均匀分布, 减少hash冲突;    
-● 无符号右移  
+无符号右移  
 各个位向右移指定的位数;右移后左边突出的位用零来填充;移出右边的位被丢弃  
 ```
 static final int HASH_BITS = 0x7fffffff; // usable bits of normal node hash   //01111111_11111111_11111111_11111111
@@ -51,49 +57,61 @@ static final int spread(int h) {
 ```
 final V putVal(K key, V value, boolean onlyIfAbsent) {
     if (key == null || value == null) throw new NullPointerException();
-    int hash = spread(key.hashCode());  //  再次hash, hash值均匀分布, 减少hash冲突;    
+    //  再次 hash, hash 值均匀分布, 减少 hash 冲突;    
+    int hash = spread(key.hashCode());  
     int binCount = 0;
     for (Node<K,V>[] tab = table;;) {
         Node<K,V> f; int n, i, fh; K fk; V fv;
         if (tab == null || (n = tab.length) == 0)
-            tab = initTable();  //  如果hash表为空, 初始化hash表  initTable;
-        else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {  //  如果hash值对应的位置, 没有数据, 直接将value放进去, 结束 putVal;
+            tab = initTable();  //  如果 hash 表为空, 初始化 hash表  initTable;  
+        //   table[i] 为空, 利用 CAS 在 table[i] 头结点直接插入, 
+        //  如果插入成功, 退出插入操作;  
+        //  如果插入失败, 则有其他节点已经插入, 继续下一步;  
+        else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {  
+             //   如果 hash 值对应的位置, 没有数据, 用 CAS 将 value 放进去, 插入成功, 结束 putVal;
             if (casTabAt(tab, i, null, new Node<K,V>(hash, key, value)))
                 break;                   // no lock when adding to empty bin
         }
-        else if ((fh = f.hash) == MOVED)  //  需要扩容  
+        //  需要扩容 , 如果 table[i] 不为空, 且 table[i] 的 hash 值为 -1, 则有其他线程在执行扩容操作, 帮助他们一起扩容, 提高性能  
+        else if ((fh = f.hash) == MOVED)  
             tab = helpTransfer(tab, f);
+        //  key value都存在, 表示重复,  结束 putVal;  
         else if (onlyIfAbsent && fh == hash &&  // check first node
                  ((fk = f.key) == key || fk != null && key.equals(fk)) &&
-                 (fv = f.val) != null)      //  key value都存在, 表示重复,  结束 putVal;
+                 (fv = f.val) != null)      
             return fv;
+        //  如果以上条件都不满足, 也就是存在 hash 冲突, 那就要进行加锁操作, 锁住链表或者红黑树的头结点;  
         else {
             V oldVal = null;
             synchronized (f) {
                 if (tabAt(tab, i) == f) {
-                    if (fh >= 0) {  //  如果是链表节点  
+                    //  fh >= 0, 表示该节点是链表结构, 将该节点插入到链表尾部  
+                    if (fh >= 0) {  
                         binCount = 1;
                         for (Node<K,V> e = f;; ++binCount) {
                             K ek;
+                            //  key相同, 替换原先的value
                             if (e.hash == hash &&
                                 ((ek = e.key) == key ||
                                  (ek != null && key.equals(ek)))) {
                                 oldVal = e.val;
-                                if (!onlyIfAbsent)  //  key相同, 替换原先的value
+                                if (!onlyIfAbsent)  
                                     e.val = value;
                                 break;
                             }
                             Node<K,V> pred = e;
-                            if ((e = e.next) == null) {  //  在链表尾, 插入新的节点  
+                            //  在链表尾, 插入新的节点  
+                            if ((e = e.next) == null) {  
                                 pred.next = new Node<K,V>(hash, key, value);
                                 break;
                             }
                         }
-                    }
-                    else if (f instanceof TreeBin) {  //  如果是 树节点
+                    }  
+                    //  如果是树节点, 这个过程采用同步内置锁实现并发  
+                    else if (f instanceof TreeBin) {  
                         Node<K,V> p;
                         binCount = 2; 
-                        // 插入节点, 并旋转红黑树  
+                        //  插入节点, 并旋转红黑树  
                         if ((p = ((TreeBin<K,V>)f).putTreeVal(hash, key,
                                                        value)) != null) {
                             oldVal = p.val;
@@ -105,8 +123,10 @@ final V putVal(K key, V value, boolean onlyIfAbsent) {
                         throw new IllegalStateException("Recursive update");
                 }
             }
+            //  到此时, 已将键值对插入到了合适的位置, 检查链表长度是否超过阈值, 若是, 则转变为红黑树结构
             if (binCount != 0) {
-                if (binCount >= TREEIFY_THRESHOLD)  //  同一个 hash位置, 链表的长度 >=8  就要树化
+                //  同一个 hash 位置, 链表的长度 >=8  就要树化  
+                if (binCount >= TREEIFY_THRESHOLD)  
                     treeifyBin(tab, i);
                 if (oldVal != null)
                     return oldVal;
@@ -114,10 +134,21 @@ final V putVal(K key, V value, boolean onlyIfAbsent) {
             }
         }
     }
+    //  count+1, 如有必要, 则扩容  
     addCount(1L, binCount);  //  统计size, 并且检查是否需要扩容
     return null;
 }
 ```
+1.. 如果待插入的键值对中 key 或 value 为 null, 抛出异常, 结束, 否则执行 2  
+2.. 如果 table 为 null, 则进行初始化操作 initTable(), 否则执行3   
+3.. 如果 table[i] 为空, 则用 CAS 在 table[i] 头结点直接插入, 
+      如果 CAS 执行成功, 退出插入操作, 执行步骤 7;  
+      如果 CAS 失败, 则说明有其他节点已经插入, 执行 4;  
+4.. 此时判断, hash 值是否为 MOVED(-1), 如果是则说明, 有其他线程在执行扩容操作, 帮助他们一起扩容, 来提高性能, 如果没有在扩容, 那么执行 5;  
+5.. 判断 hash 的值, 如果 >=0, 则在链表合适的位置插入, 否则查看 table[i] 是否是红黑树结构, 如果是, 则在红黑树适当位置插入;  
+      到此时, 键值对已经顺利插入, 接下来执行 6;  
+6.. 如果 table[i] 节点数 binCount 不为 0, 判断它此时的状态, 是否需要转变为红黑树;  
+7.. 执行 addCount(1L,  binCount);  
 
 ### initTable  
 ```
@@ -125,8 +156,9 @@ private final Node<K,V>[] initTable() {
     Node<K,V>[] tab; int sc;
     while ((tab = table) == null || tab.length == 0) {   //  hash表为空, 进行初始化  
         if ((sc = sizeCtl) < 0)  //  sizeCtl<0表示其他线程已经在初始化了或者扩容了, 挂起当前线程 
-            Thread.yield(); // lost initialization race; just spin
-        else if (U.compareAndSetInt(this, SIZECTL, sc, -1)) {  //  CAS操作SIZECTL为-1, 表示初始化状态  
+            Thread.yield(); 
+        //  如果该线程获取了初始化的权利, 则用 CAS 将 sizeCtl 设置为 -1, 表示本线程正在初始化
+        else if (U.compareAndSetInt(this, SIZECTL, sc, -1)) {  
             try {
                 if ((tab = table) == null || tab.length == 0) {
                     int n = (sc > 0) ? sc : DEFAULT_CAPACITY;
@@ -401,11 +433,12 @@ public V get(Object key) {
     int h = spread(key.hashCode());  //  计算两次hash  
     if ((tab = table) != null && (n = tab.length) > 0 &&
         (e = tabAt(tab, (n - 1) & h)) != null) {  //  读取首节点的Node元素
+        //  搜索到的节点 key 与传入的 key 相同且不为 null, 直接返回这个节点;  
         if ((eh = e.hash) == h) {  //  如果该节点就是首节点就返回
             if ((ek = e.key) == key || (ek != null && key.equals(ek)))
                 return e.val;
         }
-        //  hash值为负值表示正在扩容, 这个时候查的是ForwardingNode的find方法来定位到nextTable来查找, 查找到就返回
+        //  hash值为负值表示正在扩容, 这个时候查的是 ForwardingNode 的 find 方法来定位到 nextTable来查找, 查找到就返回
         else if (eh < 0)
             return (p = e.find(h, key)) != null ? p.val : null;
         while ((e = e.next) != null) {  //  既不是首节点也不是ForwardingNode, 那就往下遍历
@@ -417,10 +450,21 @@ public V get(Object key) {
     return null;
 }
 ```
+### 常见问题  
+#### 为什么线程同步用的是 synchronized 而不是锁  
+为什么是 synchronized, 而不是可重入锁   
+1.. 减少内存开销, 假设使用可重入锁来获得同步支持, 那么每个节点都需要通过继承 AQS 来获得同步支持, 但并不是每个节点都需要获得同步支持的,   
+只有链表的头节点(红黑树的根节点)需要同步, 这无疑带来了巨大内存浪费;   
+2.. 获得 JVM 的支持 可重入锁毕竟是 API 这个级别的, 后续的性能优化空间很小, synchronized 则是 JVM 直接支持的,   
+JVM 能够在运行时作出相应的优化措施: 锁粗化, 锁消除, 锁自旋等等;  
+
+
 
 ### 参考  
+https://juejin.im/entry/592a39820ce4630057778b80  
 https://my.oschina.net/hosee/blog/639352  
 https://my.oschina.net/hosee/blog/675884  
+https://www.cnblogs.com/study-everyday/p/6430462.html  
 
 https://www.jianshu.com/p/c0642afe03e0  
 https://www.jianshu.com/p/23b84ba9a498  

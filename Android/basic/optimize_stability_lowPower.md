@@ -243,6 +243,10 @@ Heap Viewer
 Allocation Tracker  
 一个内存追踪分析工具, 追踪内存分配信息，按顺序排列  
 
+BlockCanary  
+页面卡顿检测  
+
+
 ### 参考  
 https://www.jianshu.com/p/f5514b1a826c  
 https://www.jianshu.com/p/4f44a178c547  
@@ -309,3 +313,18 @@ https://www.kancloud.cn/digest/itfootballprefermanc/100908
 
 Memory Monitor  
 https://blog.csdn.net/true100/article/details/52604910  
+
+BlockCanary  
+https://github.com/markzhai/AndroidPerformanceMonitor  
+
+GT  
+https://github.com/Tencent/GT  
+
+Emmagee  
+https://www.cnblogs.com/jytian/p/6516170.html  
+https://github.com/NetEase/Emmagee  
+
+iTest  
+https://www.25pp.com/android/detail_6522701/  
+
+  

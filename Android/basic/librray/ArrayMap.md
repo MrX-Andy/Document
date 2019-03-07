@@ -46,7 +46,10 @@ HashMap 维护了, Node 数组,  每个 Node 包括 key-value-hash, Node 指针;
 还维护了 Set<Entry<K, V>> entrySet, 用来迭代所有节点;  
 还维护了 TreeNode, 用来存储树的节点;  
 ArrayMap 存储的是 key-value 的原始数据, HashMap 存储的是 key-value 的包装数据- Node 节点;  
+![HashMap](ImageFiles/map_001.jpg)  
+正如上面图示, hash 数组很有可能出现, 数组元素并未存满, 形成稀疏数组, 导致浪费内存;  
 所以 ArrayMap 更节省内存;  
+
 
 在扩容的时候, ArrayMap 存在数组的迁移, 使用 System.arraycopy 拷贝老数组元素;  
 HashMap 扩容, 需要遍历所有的节点, 并判断要不要更换 index;  
