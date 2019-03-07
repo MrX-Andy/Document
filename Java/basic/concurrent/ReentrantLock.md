@@ -776,7 +776,7 @@ https://javadoop.com/post/AbstractQueuedSynchronizer-2
 https://javadoop.com/post/AbstractQueuedSynchronizer-3  
 https://blog.csdn.net/zs064811/article/details/76996727  
 https://blog.csdn.net/pfnie/article/details/53191892  
-
+https://www.jianshu.com/p/4358b1466ec9  
 
 https://www.cnblogs.com/micrari/p/6937995.html  
 http://www.tianxiaobo.com/2018/05/07/Java-重入锁-ReentrantLock-原理分析/  

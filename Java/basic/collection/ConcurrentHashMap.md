@@ -419,7 +419,12 @@ public V get(Object key) {
 ```
 
 ### 参考  
-http://www.importnew.com/22007.html  
+https://my.oschina.net/hosee/blog/639352  
+https://my.oschina.net/hosee/blog/675884  
+
+https://www.jianshu.com/p/c0642afe03e0  
+https://www.jianshu.com/p/23b84ba9a498  
+
 http://www.importnew.com/26049.html  
 http://blog.csdn.net/u010723709/article/details/48007881  
 http://blog.csdn.net/fjse51/article/details/55260493  
