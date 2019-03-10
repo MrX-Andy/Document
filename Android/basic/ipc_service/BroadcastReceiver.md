@@ -183,11 +183,52 @@ localBroadcastManager.sendBroadcast(Intent().apply {
 使用简单, 只能动态注册, 没有顺序广播;  
 
 ### 原理  
+BroadcastQueue#mParallelBroadcasts  
+```
+final ArrayList<BroadcastRecord> mParallelBroadcasts = new ArrayList<>();
+```
+无序广播, 存储在 mParallelBroadcasts 中, 
+
+BroadcastQueue#mOrderedBroadcasts  
+```
+final ArrayList<BroadcastRecord> mOrderedBroadcasts = new ArrayList<>();
+```
+有序广播, 存储在 mOrderedBroadcasts 中, 
+
+ActivityManagerService#mReceiverResolver  
+```
+IntentResolver<BroadcastFilter, BroadcastFilter> mReceiverResolver;  
+```
+需要为接收器制定 InterFilter, 作为 Receiver 的身份信息;  
+
+静态注册都是在应用安装时, 由 PackageManagerService(PMS)解析注册;  
+在 android 系统启动的时候, PackageManagerService 也会把静态广播注册到 AMS 中, 因为系统重启是会安装所有的 app;  
+
+广播注册, 是注册到 AMS 中;  
+发送广播, 是发送到 AMS 中;  
+AMS 把广播内容发给 Client 端, 首先是 ApplicationThread 接收到, 把 AMS 中的 IIntentReceiver 对象转为 InnerREceiver 对象;  
+
+
+#### 注册过程  
+ContextImpl#registerReceiver  
+ContextImpl#registerReceiverInternal  
+```
+final Intent intent = ActivityManager.getService().registerReceiver(
+        mMainThread.getApplicationThread(), mBasePackageName, rd, filter,
+        broadcastPermission, userId, flags);
+```
+ActivityManagerService#registerReceiver  
+最终, 广播接收器, 会注册到 mReceiverResolver;  
+
+#### 发送过程  
 Activity#sendBroadcast  
 ContextWrapper#sendBroadcast  
 ContextImpl#sendBroadcast  
-ActivityManagerServiceNative#broadcastIntent  
-ActivityManagerServiceNative#broadcastIntentLocked  
+ActivityManagerService#broadcastIntent  
+ActivityManagerService#broadcastIntentLocked  
+会根据 Intent-Filter 查找匹配的广播接收器, 并将满足条件的接收器, 添加到 BroadcastQueue 中, 然后把数据传给响应的接收器;  
+
+BroadcastQueue#enqueueParallelBroadcastLocked  
 BroadcastQueue#scheduleBroadcastsLocked  
 ```
 //  广播是通过 handler 实现的异步发送;  
@@ -199,7 +240,7 @@ BroadcastQueue#processNextBroadcastLocked
 //  检查广播发送和接受的权限判断  
 BroadcastQueue#deliverToRegisteredReceiverLocked  
 BroadcastQueue#performReceiveLocked  
-ApplicationThreadNative#scheduleRegisteredReceiver  
+ApplicationThread#scheduleRegisteredReceiver  
 ApplicationThread#scheduleRegisteredReceiver  
 LoadedApk.ReceiverDispatcher.InnerReceiver#performReceive  
 LoadedApk.ReceiverDispatcher#performReceive  
@@ -212,12 +253,9 @@ AMS 在消息循环中处理这个广播, 并通过 Binder 机制, 把这个广�
 ReceiverDispatcher 把这个广播放进 MainActivity 所在的线程的消息队列中去;  
 ReceiverDispatcher 的内部类 Args 在 MainActivity 所在的线程消息循环中处理这个广播, 最终将这个广播分发给 BroadcastReceiver#onReceive 函数进行处理;  
 
+
+
 ### 参考  
-原理  
-https://www.jianshu.com/p/d0ab021a65f9  
-https://www.jianshu.com/p/37f366064b98  
-
-
 https://blog.csdn.net/luoshengyang/article/details/6744448  
 https://www.jianshu.com/p/abb173858faf  
 https://www.kancloud.cn/alex_wsc/androids/477751  
@@ -226,6 +264,12 @@ https://www.cnblogs.com/lwbqqyumidi/p/4168017.html
 http://www.aoaoyi.com/archives/342.html  
 https://www.jianshu.com/p/02085150339c  
 https://www.jianshu.com/p/abb173858faf  
+
+原理  
+https://www.jianshu.com/p/d0ab021a65f9  
+https://www.jianshu.com/p/37f366064b98  
+https://www.open-open.com/lib/view/open1475654927659.html  
+https://blog.csdn.net/jly0612/article/details/51258621  
 
 
 局部广播  

@@ -11,6 +11,7 @@ Activity;  Fragment;  Context;  Application;
 [Service](basic/ipc_service/Service.md)  
 [BroadcastReceiver](basic/ipc_service/BroadcastReceiver.md)  
 [ContentProvider](basic/ipc_service/ContentProvider.md)  
+[PackageManagerService](basic/ipc_service/PackageManagerService.md)   
 [AIDL](basic/ipc_service/AIDL.md)  
 
 [统一资源标识符 URI](/ComputerScience/network/URI.md)   
@@ -25,7 +26,9 @@ Activity;  Fragment;  Context;  Application;
 优化稳定性;  低功耗;  性能优化;  冷启动介绍;  冷启动优化;  ANR;  
 [链接](basic/optimize_stability_lowPower.md)  
 
-[插件化](basic/Plugin.md)  
+插件化; 热更新; 热修复; Plugin; ClassLoader;  
+[插件化](basic/plugin/pulgin.md)  
+
 [常见问题](basic/librray/bug.md)  
 [tools 命名空间](basic/tools.md)  
 
@@ -45,14 +48,13 @@ invalidate;  requestLayout;
 [链接](basic/view_window/invalidate_requestLayout.md)  
 
 Activity#setContentView 机制;  
-对Activity-Window-View的认识;  
+对 Activity-Window-View 的认识;  
 [链接](basic/view_window/activity_window_view.md)  
 
 
 [自定义控件相关基础知识](basic/view_window/view_basic_know.md)
 [Android 事件分发机制](basic/view_window/dispatchTouchEvent.md)  
 [对LayoutInflater的理解](basic/view_window/LayoutInflater.md)  
-
 
 
 
@@ -67,6 +69,7 @@ View 圆角化, 布局圆角化, 控件圆角化, 图片圆角化;
 [ImageView 与 Bitmap](basic/ImageView.md)  
 [RecyclerView](basic/recyclerView/RecyclerView.md)  
 
+SurfaceFlinger, 
 深入Android系统  
 IPC机制，Binder和匿名共享内存等  
 四大组件启动，工作原理  

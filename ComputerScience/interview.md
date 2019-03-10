@@ -166,6 +166,14 @@ Stack max()  O(1),  怎么实现? 用一个辅助的 stack;
 要求，元素相对位置不变，时间复杂度O（1）
 2、检测一个二叉树是平衡二叉树  
 [4, 5], [5, 8] [6, 10] [11, 15], [14, 15], [17, 18] 区间合并  [4,10] [11, 15] [17, 18]  
+
+https://github.com/helen-x/AndroidInterview/blob/master/algorithm/swordForOffer/合并两个排序链表.md  
+https://github.com/helen-x/AndroidInterview/blob/master/algorithm/swordForOffer/跳台阶.md  
+https://github.com/helen-x/AndroidInterview/blob/master/algorithm/swordForOffer/变态跳台阶.md  
+https://github.com/helen-x/AndroidInterview/blob/master/algorithm/swordForOffer/数组中出现次数超过一半的数字.md  
+https://github.com/helen-x/AndroidInterview/blob/master/algorithm/swordForOffer/二维数组中的查找.md  
+https://github.com/helen-x/AndroidInterview/blob/master/algorithm/swordForOffer/二叉树的镜像.md  
+
 ### 计算机相关  
 进程 与 线程;  
 输入一个字符串判断是不是合法的iP地址
@@ -192,6 +200,7 @@ http://j.codekk.com/blogs/detail/5705bcdf4a38205862ef4770
 http://j.codekk.com/blogs/detail/5705bcdf4a38205862ef476f  
 
 ### 参考  
+https://www.jianshu.com/p/c70989bd5f29  
 https://github.com/jwasham/coding-interview-university/blob/master/translations/README-cn.md    
 https://github.com/francistao/LearningNotes   
 https://github.com/zmywly8866/Worth-Reading-the-Android-technical-articles  

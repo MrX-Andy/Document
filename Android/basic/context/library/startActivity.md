@@ -7,9 +7,10 @@ ApplicationThreadProxy  ApplicationThreadNative  ActivityManagerNative  BulkCurs
 ActivityThread  
 App的真正入口, 当开启App之后, 会调用main()开始运行, 开启消息循环队列, 启动UI线程;   
 
-ActivityThread.ApplicationThread, 用来完成 ActivityManagerService 与 ActivityThread 之间的交互;    
-在 ActivityManagerService 需要管理相关 Application 中的 Activity 的生命周期时,  通过ApplicationThread的代理对象与ActivityThread通讯;  
-ApplicationThread是ActivityThread的内部类;  
+ActivityThread.ApplicationThread  
+ApplicationThread 是 ActivityThread 的内部类, 继承于 IApplicationThread.Stub, 也就是 Binder;  
+用来完成 ActivityManagerService 与 ActivityThread 之间的交互;    
+在 ActivityManagerService 需要管理相关 Application 中的 Activity 的生命周期时, 通过 ApplicationThread 的代理对象与 ActivityThread 通讯;  
 
 ApplicationThreadProxy  
 是 ApplicationThread 在服务器端的代理, 负责和客户端的 ApplicationThread 通讯;  AMS就是通过该代理与 ActivityThread 进行通信的;  

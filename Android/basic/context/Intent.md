@@ -1,6 +1,12 @@
 ### 传值大小限制
-Intent 中的 Bundle 是使用 Binder 机制进行数据传送的;  
-能使用的 Binder 的缓冲区是有大小限制的 有些手机是 2 M,  
+Intent 中的 Bundle 是使用 Binder 机制进行数据传送的, 数据会写到内核空间, Binder 缓冲区域;  
+Binder 的缓冲区是有大小限制的, 有些 ROM 是 1M, 有些 ROM 是 2M;  
+这个限制定义在 frameworks/native/libs/binder/processState.cpp 类中, 如果超过这个限制, 系统就会报错;  
+```  
+#define BINDER_VM_SIZE ((1*1024*1024) - (4096 *2)) ; 
+```
+因为 Binder 本身就是为了进程间频繁-灵活的通信所设计的, 并不是为了拷贝大量数据;  
+
 而一个进程默认有 16 个 Binder 线程, 所以一个线程能占用的缓冲区就更小了, 有人以前做过测试, 大约一个线程可以占用 128 KB;    
 所以当你看到 The Binder transaction failed because it was too large 这类 TransactionTooLargeException 异常;  
 
@@ -176,4 +182,5 @@ Intent intent =  new Intent(Settings.ACTION_BLUETOOTH_SETTINGS); startActivity
 ```
 ### 参考    
 https://developer.android.com/guide/components/intents-common  
+https://www.jianshu.com/p/c0eed3b2a473  
 

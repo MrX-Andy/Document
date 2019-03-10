@@ -37,6 +37,40 @@ xml文件越大, 读取越慢, 数据分开放;
 数据修改, 集中提交;  
 如果不要求立即的到反馈, 最好使用 apply 方式提交数据;  
 
+❀ 怎么能让 SharePreference 跨进程通信  
+1.. SharePreference 从磁盘往内存写入数据, 发生在 SharePreference 对象, 初始化的时候;  
+2.. 内存缓存了 SharePreference 对象;   
+所以, 只要在需要读取其他进程的数据时, 重新创建一个 SharePreference 对象, 即可;  
+```
+android.app.ContextImpl#sSharedPrefsCache  
+@Override
+public SharedPreferences getSharedPreferences(File file, int mode) {
+    SharedPreferencesImpl sp;
+    synchronized (ContextImpl.class) {
+        final ArrayMap<File, SharedPreferencesImpl> cache = getSharedPreferencesCacheLocked();
+        sp = cache.get(file);
+        if (sp == null) {
+            checkMode(mode);
+            sp = new SharedPreferencesImpl(file, mode);
+            cache.put(file, sp);
+            return sp;
+        }
+    }
+    return sp;
+}
+private ArrayMap<File, SharedPreferencesImpl> getSharedPreferencesCacheLocked() {
+    if (sSharedPrefsCache == null) {
+        sSharedPrefsCache = new ArrayMap<>();
+    }
+    final String packageName = getPackageName();
+    ArrayMap<File, SharedPreferencesImpl> packagePrefs = sSharedPrefsCache.get(packageName);
+    if (packagePrefs == null) {
+        packagePrefs = new ArrayMap<>();
+        sSharedPrefsCache.put(packageName, packagePrefs);
+    }
+    return packagePrefs;
+}
+```
 ### 参考  
 https://juejin.im/post/5c34615bf265da614171bf8a  
 https://juejin.im/post/5c361469f265da61776c29d0  

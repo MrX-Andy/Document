@@ -146,4 +146,30 @@ kapt 'com.github.bumptech.glide:compiler:4.8.0'
 @GlideModule
 public final class ExampleAppGlideModule extends AppGlideModule {}  
 ```
+### recyclerView#滑动很快  
+```
+recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+    @Override
+    public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+        super.onScrollStateChanged(recyclerView, newState);
+        if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+            LoggerUtils.e("initRecyclerView"+ "恢复Glide加载图片");
+            Glide.with(ImageBrowseActivity.this).resumeRequests();
+        }else {
+            LoggerUtils.e("initRecyclerView"+"禁止Glide加载图片");
+            Glide.with(ImageBrowseActivity.this).pauseRequests();
+        }
+    }
+});
+```
+### Application  
+```
+onLowMemory(){
+    Glide.cleanMemory();  
+}  
+onTrimMemory(){
+    Glide.trimMemory();
+}
+```
+
 

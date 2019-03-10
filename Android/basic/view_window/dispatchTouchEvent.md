@@ -34,3 +34,4 @@ Activity.super.onTouchEvent(ev); 默认值是 false;
 ViewGroup.super.onTouchEvent(ev); 默认值是 false;  
 View.super.onTouchEvent(ev); 默认值是 true;  
 
+![流程图](../ImageFiles/touch_001.png)  

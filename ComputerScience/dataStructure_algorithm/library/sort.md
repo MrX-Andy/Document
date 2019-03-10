@@ -70,13 +70,13 @@ public static int partition(int[] array, int low, int high) {
         while (low < high && array[high] >= pivot) {
             high--;
         }
-        array[low] = array[high];  //  从后面开始找到第一个小于pivot的元素，放到low位置
+        array[low] = array[high];  //  从后面开始找到第一个小于 pivot 的元素, 放到 low 位置
         while (low < high && array[low] <= pivot) {
             low++;
         }
-        array[high] = array[low];  //  从前面开始找到第一个大于pivot的元素，放到high位置
+        array[high] = array[low];  //  从前面开始找到第一个大于 pivot 的元素, 放到 high 位置
     }
-    array[low] = pivot;  //  最后枢纽元放到low的位置
+    array[low] = pivot;  //  最后枢纽元放到 low 的位置
     return low;
 }
 ``` 
