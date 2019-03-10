@@ -231,13 +231,14 @@ AMS 把广播内容发给 Client 端, 首先是 ApplicationThread 接收到, 把
 先发送无序广播, 再发送有序广播;  
 对于无序广播而言, 动态注册的 BroadcastReceiver 接收广播的优先级, 高于静态注册的 BroadcastReceiver;  
 
-#### 注册过程  
 1.. 广播接收者 BroadcastReceiver, 通过 Binder 通信向 AMS 进行注册;  
 2.. 广播发送者通过 Binder 通信向 AMS 发送广播;  
 3.. AMS 收到广播后, 查找与之匹配的 BroadcastReceiver, 然后将广播发送到 BroadcastReceiver 对应进程的消息队列中;  
 4.. BroadcastReceiver 对应进程的处理该消息时, 将回调 BroadcastReceiver 中的 onReceive()方法;  
 5.. 广播处理完毕后, BroadcastReceiver 对应进程按需将执行结果通知给 AMS, 以便触发下一次广播发送;  
 
+
+#### 注册过程  
 
 ContextImpl#registerReceiver  
 ContextImpl#registerReceiverInternal  
