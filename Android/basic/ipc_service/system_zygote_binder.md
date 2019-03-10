@@ -58,6 +58,12 @@ Server 端可以通过, 已经建立的 Binder 连接, 完成通信, 将创建�
 Client 将会收到这个匿名 Binder 的引用, 通过这个引用向位于 Server 中的实体发送请求;  
 匿名 Binder 为通信双方建立一条私密通道, 只要 Server 没有把匿名 Binder 发给别的进程,  别的进程就无法获得该 Binder 的引用, 向该 Binder 发送请求;   
 
+
+android.os.ServiceManager  
+是一个工具, 通过 ServiceManager 可以得到 getService, 得到一个 IBinder 对象, 而 IBinder 对象, 对应 binder 引用;  
+ServiceManager.addService 启动的服务, 是 Binder 的子类;  
+
+
 #### zygote#进程  
 Android 是基于 Linux 系统的, 当手机开机的时候, Linux 的内核加载完成之后, 就会启动一个 "init" 的进程;   
 在 Linux 系统中, 所有的进程都是由 init 进程 fork 出来的, zygote 进程也不例外;  
@@ -74,15 +80,21 @@ Zygote 进程, 做了哪些事情:
     preload()预加载通用类, drawable 和 color 资源, openGL 以及共享库以及 WebView, 用于提高 app 启动效率;  
 
 #### SystemServer#进程  
-在  ZygoteInit.main()方法里 调用 forkSystemServer()方法 fork 了 SystemServer 进程;  
+com.android.server.SystemServer 是一个进程;  
+在 ZygoteInit.main()方法中, 调用 forkSystemServer()方法 fork 了 SystemServer 进程;  
 进程描述: className="com.android.server.SystemServer", 进程名字="system_server";  
 SystemServer 进程, 做了哪些事情:  
 1.. 启动 Binder 线程池, 这样就可以与其他进程进行通信;   
-2.. 创建 SystemServiceManager 用于对系统的服务进行创建, 启动和生命周期管理;  
+2.. 创建 SystemServiceManager 类, 用于对系统的服务进行创建, 启动和生命周期管理;  
 3.. 启动各种系统服务, 比如, ActivityManagerService, PackageManagerService, WindowManagerService, DisplayManagerService 等等, 他们(这几个Service)都工作在 SystemServer 进程;  
 4.. 最后调用Looper.loop(); 进行消息循环, 后续会处理相关消息;  
 
+com.android.server.SystemServiceManager  
+是一个工具, 通过 SystemServiceManager 可以 startService;  
+SystemServiceManager.startService 启动的服务, 是 SystemService 的子类;  
+
 #### ActivityManagerService  
+工作在 SystemServer 进程;  
 SystemServer 进程 #run 方法 ⤑ #startBootstrapServices 方法 ⤑  启动 ActivityManagerService;  
 在 SystemServer.java 的 run方法, ActivityManagerService 向 Native 的 ServiceManager 注册服务;  
 ActivityManagerService 是服务端对象, 负责系统中所有 Activity 的生命周期;  
@@ -281,27 +293,14 @@ Client 调用远程服务, 远程服务收到 Client 请求之后, 会和 Binder
 
 ### 各个类的作用  
 
-
-
 android.app.IActivityManager  
 android.app.IApplicationThread  
-
-android.os.ServiceManager  
-是一个工具, 通过 ServiceManager 可以得到 getService, 得到一个 IBinder 对象, 而 IBinder 对象, 对应 binder 引用;  
-ServiceManager.addService 启动的服务, 是 Binder 的子类;  
-
-com.android.server.SystemServiceManager  
-是一个工具, 通过 SystemServiceManager 可以 startService;  
-SystemServiceManager.startService 启动的服务, 是 SystemService 的子类;  
 
 ActivityManagerService 继承于 IActivityManager.Stub, 驻留在 system_server 进程;  
 PowerManagerService 继承于 SystemService  
 
 com.android.server.SystemService  
 SystemService是一个抽象类  
-
-com.android.server.SystemServer  
-SystemServer 是一个进程,   
 
 ServiceManager: 通过 getIServiceManager 方法获取的是 ServiceManagerProxy 对象;   
 ServiceManager 的 addService, getService 实际工作都交由 ServiceManagerProxy 的相应方法来处理;  
@@ -531,6 +530,7 @@ http://liuwangshu.cn/framework/component/1-activity-start-2.html
 
 
 ### 名词解释  
+
 MISC    Mobile Information Service Center 移动信息服务中心   
 
 mmap  

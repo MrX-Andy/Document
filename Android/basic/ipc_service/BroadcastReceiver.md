@@ -183,11 +183,19 @@ localBroadcastManager.sendBroadcast(Intent().apply {
 使用简单, 只能动态注册, 没有顺序广播;  
 
 ### 原理  
+ActivityManagerService#mStickyBroadcasts  
+```
+final SparseArray<ArrayMap<String, ArrayList<Intent>>> mStickyBroadcasts = new SparseArray<ArrayMap<String, ArrayList<Intent>>>();
+```
+根据 userId 存储 ArrayMap;  
+
+
 BroadcastQueue#mParallelBroadcasts  
 ```
 final ArrayList<BroadcastRecord> mParallelBroadcasts = new ArrayList<>();
 ```
 无序广播, 存储在 mParallelBroadcasts 中, 
+
 
 BroadcastQueue#mOrderedBroadcasts  
 ```
@@ -195,21 +203,42 @@ final ArrayList<BroadcastRecord> mOrderedBroadcasts = new ArrayList<>();
 ```
 有序广播, 存储在 mOrderedBroadcasts 中, 
 
+
 ActivityManagerService#mReceiverResolver  
 ```
 IntentResolver<BroadcastFilter, BroadcastFilter> mReceiverResolver;  
 ```
 需要为接收器制定 InterFilter, 作为 Receiver 的身份信息;  
 
+
+ActivityManagerService#mRegisteredReceivers  
+```
+final HashMap<IBinder, ReceiverList> mRegisteredReceivers = new HashMap<>();  
+final class ReceiverList extends ArrayList<BroadcastFilter>{  }
+```
+registeredReceivers 用于保存匹配当前广播的动态注册的 BroadcastReceiver;  
+BroadcastFilter 中有对应的 BroadcastReceiver 的引用;  
+
+
 静态注册都是在应用安装时, 由 PackageManagerService(PMS)解析注册;  
 在 android 系统启动的时候, PackageManagerService 也会把静态广播注册到 AMS 中, 因为系统重启是会安装所有的 app;  
 
 广播注册, 是注册到 AMS 中;  
 发送广播, 是发送到 AMS 中;  
-AMS 把广播内容发给 Client 端, 首先是 ApplicationThread 接收到, 把 AMS 中的 IIntentReceiver 对象转为 InnerREceiver 对象;  
+AMS 把广播内容发给 Client 端, 首先是 ApplicationThread 接收到, 把 AMS 中的 IIntentReceiver 对象转为 InnerReceiver 对象;  
 
+
+先发送无序广播, 再发送有序广播;  
+对于无序广播而言, 动态注册的 BroadcastReceiver 接收广播的优先级, 高于静态注册的 BroadcastReceiver;  
 
 #### 注册过程  
+1.. 广播接收者 BroadcastReceiver, 通过 Binder 通信向 AMS 进行注册;  
+2.. 广播发送者通过 Binder 通信向 AMS 发送广播;  
+3.. AMS 收到广播后, 查找与之匹配的 BroadcastReceiver, 然后将广播发送到 BroadcastReceiver 对应进程的消息队列中;  
+4.. BroadcastReceiver 对应进程的处理该消息时, 将回调 BroadcastReceiver 中的 onReceive()方法;  
+5.. 广播处理完毕后, BroadcastReceiver 对应进程按需将执行结果通知给 AMS, 以便触发下一次广播发送;  
+
+
 ContextImpl#registerReceiver  
 ContextImpl#registerReceiverInternal  
 ```
@@ -219,14 +248,37 @@ final Intent intent = ActivityManager.getService().registerReceiver(
 ```
 ActivityManagerService#registerReceiver  
 最终, 广播接收器, 会注册到 mReceiverResolver;  
+ActivityManagerService 中会使用 ReceiverList 列表来保存这些使用了相同的 InnerReceiver 对象来注册的广播接收者;  
 
 #### 发送过程  
 Activity#sendBroadcast  
 ContextWrapper#sendBroadcast  
 ContextImpl#sendBroadcast  
+把 BroadcastReceiver 封装成 InnerReceiver, 再加上 IntentFilter 传给 ActivityManagerService;  
+
 ActivityManagerService#broadcastIntent  
 ActivityManagerService#broadcastIntentLocked  
 会根据 Intent-Filter 查找匹配的广播接收器, 并将满足条件的接收器, 添加到 BroadcastQueue 中, 然后把数据传给响应的接收器;  
+```
+if (!replaced) {
+    // 无序广播
+    queue.enqueueParallelBroadcastLocked(r);
+    queue.scheduleBroadcastsLocked();
+}
+
+if (!replaced) {
+    // 有序广播
+    queue.enqueueOrderedBroadcastLocked(r);
+    queue.scheduleBroadcastsLocked();
+}
+```
+表示广播不会发送给已经停止的应用, 这样做是为了防止广播无意间或者在不必要时调起已经停止运行的应用;  
+```
+//  Android3.1 开始所有的广播都默认添加了  
+//  应用安装后未运行;  
+//  应用被手动或者其他应用强行停止了;  
+intent.addFlags(Intent.FLAG_EXCLUDE_STOPPED_PACKAGES);
+```
 
 BroadcastQueue#enqueueParallelBroadcastLocked  
 BroadcastQueue#scheduleBroadcastsLocked  
@@ -264,12 +316,14 @@ https://www.cnblogs.com/lwbqqyumidi/p/4168017.html
 http://www.aoaoyi.com/archives/342.html  
 https://www.jianshu.com/p/02085150339c  
 https://www.jianshu.com/p/abb173858faf  
+https://www.open-open.com/lib/view/open1475654927659.html  
 
 原理  
 https://www.jianshu.com/p/d0ab021a65f9  
 https://www.jianshu.com/p/37f366064b98  
 https://www.open-open.com/lib/view/open1475654927659.html  
 https://blog.csdn.net/jly0612/article/details/51258621  
+https://blog.csdn.net/kitty_landon/article/details/78849216  
 
 
 局部广播  

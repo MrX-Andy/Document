@@ -120,10 +120,18 @@ transaction.commitAllowingStateLoss();
 manager.executePendingTransactions();
 ```
 ### startActivity流程  
+![流程图](ImageFiles/start_ac_001.png)  
+之前, ActivityManagerNative.getDefault() 得到一个 ActivityManagerProxy 对象, 它是跟 AMS 进行通信, 是 client 端的代表;  
+AMP 通过 binder 将数据传输到 AMN, 后面程序进入 system_server 进程, 开始继续执行;  
+AMN 是 AMS 通信过程中 service 端的代表, 它继承于 Binder, 实现了 IActivityManager 的方法, 但它只是调用, 直接实现的类是 AMS;  
+
+
 
 api >= 26 之后  
 ApplicationThreadProxy  ApplicationThreadNative  ActivityManagerNative  BulkCursorNative  ContentProviderNative  
 都被废弃;  
+
+
 
 ActivityThread  
 App的真正入口, 当开启App之后, 会调用main()开始运行, 开启消息循环队列, 启动UI线程;   
@@ -255,6 +263,7 @@ https://juejin.im/post/5c483eaff265da61327fa0e3
 https://blog.csdn.net/AndrExpert/article/details/81488503  
 https://www.jianshu.com/p/a72c5ccbd150  
 https://lrh1993.gitbooks.io/android_interview_guide/content/android/advance/app-launch.html  
+https://blog.csdn.net/afu10086/article/details/80140817  
 
 ❀ Activity 参考  
 http://liuwangshu.cn/framework/ams/2-activitytask.html  
