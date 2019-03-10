@@ -112,6 +112,9 @@ App 进程的 binder 线程 (ApplicationThread) 在收到请求后, 通过 handl
 主线程在收到 Message 后, 通过发射机制创建目标 Activity, 并回调 Activity.onCreate()等方法;  
 到此, App 便正式启动, 开始进入 Activity 生命周期, 执行完 onCreate/onStart/onResume方法, UI 渲染结束后便可以看到 App 的主界面;  
 
+Activity 启动流程, 详见  
+[链接](/Android/basic/context/Activity.md)  
+
 ### 为什么是#binder  
 1.. Activity, BroadcastReceiver, ContentProvider, Service, Messenger, AIDL (这几种, 底层全是 binder 机制);  
 2.. socket 方式;  

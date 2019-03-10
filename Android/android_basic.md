@@ -4,8 +4,6 @@ zygote#启动流程;  进程间通信;  IPC;  Binder机制;
 
 [进程, 进程优先级](basic/ipc_service/process.md)  
 
-[startActivity 启动流程](basic/context/startActivity.md)  
-
 Application 内存回收机制; 内存回调;  
 [链接](basic/context/memory_callback.md)      
 
