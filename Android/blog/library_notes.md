@@ -25,6 +25,7 @@ https://droidyue.com/blog/archives
 https://www.jianshu.com/u/de857e73f1a0  
 https://lrh1993.gitbooks.io/android_interview_guide/content/android/advance.html  
 https://blog.csdn.net/carson_ho  
+https://blog.csdn.net/shift_wwx/article/list/10  
 
 ❀  尼古拉斯_赵四  
 http://www.wjdiankong.cn/  
@@ -92,6 +93,7 @@ http://blog.csdn.net/xiaole0313
 http://wuxiaolong.me/archives/index.html  
 http://zmywly8866.github.io/  
 https://mrfu.me/  
+
 ### 废弃，不用看了    
 http://blog.lmj.wiki/archives/page/10/  
 http://blog.csdn.net/cym492224103  

@@ -1,6 +1,5 @@
-BottomSheet;  dialog;  popupWindow;  toast;  Notification;  
-Snackbar;  FloatingActionButton    
-侧滑菜单;  菜单;  悬浮窗;  通知对话框  
+BottomSheet;  dialog;  popupWindow;  toast;  Notification;  Snackbar;  FloatingActionButton;    
+侧滑菜单;  菜单;  悬浮窗;  通知对话框;  
 [链接](blog/menu.md)   
 
 复选框-单选按钮;  开关控件;  状态切换;  播放器按钮;  关联加减号  
@@ -16,39 +15,32 @@ Indicator;  Tabs;  Segment;  指示器;  FootBar;
 [链接](blog/indicator_tabs_segment.md)   
 
 
-查看大图;  加载巨图;  图片缩放;  图片压缩;  图片处理;  图片剪裁;  
-图片添加水印;  添加水印;  View 生成 Image;  控件生成图片;  View转Bitmap;   
-特殊形状图片; 左右移动的图片;  电影帷幕效果;  图片预览;  图片压缩;  
-保持宽高比的图片;    矢量图 svg;  
+查看大图;  加载巨图;  图片缩放;  图片压缩;  图片处理;  图片剪裁;  图片添加水印;  添加水印;   
+View 生成 Image;  控件生成图片;  View 转 Bitmap;   特殊形状图片; 左右移动的图片;  电影帷幕效果;    
+图片预览;  图片压缩;  保持宽高比的图片;  矢量图 svg;  
 [链接](blog/image_media.md)    
 
 
-二维码扫描;  照相机;  相机;  贴纸相机;  水印相机;  
-拍摄长图;  拍摄大图;  摄影;  拍摄视频;  二维码生成;  
-滤镜相机;  静默拍照;  图片选择器;   
-无预览 直接拍照;  
-没有相机预览;  直接拍照;  
+二维码扫描;  照相机;  相机;  贴纸相机;  水印相机;  拍摄长图;  拍摄大图;  摄影;  拍摄视频;  二维码生成;  
+滤镜相机;  静默拍照;  图片选择器;   无预览 直接拍照;  没有相机预览;  直接拍照;  
 [链接](blog/camera.md)    
 
 
-播放器页面;  播放器框架;  音频播放器页面  
-视频播放器页面;  音轨跳动;  播放器列表;  聊天页面框架;    
+播放器页面;  播放器框架;  音频播放器页面;  视频播放器页面;  音轨跳动;  播放器列表;  聊天页面框架;    
 [链接](blog/media_view.md)    
 
 [点赞与礼物](blog/clap_gift.md)   
 
 
-日历选择器;  时间日期;  时间日历;  农历;      
-文件选择器;  多功能文件选择器;  文字选择器;  文本选择器    
+日历选择器;  时间日期;  时间日历;  农历;  文件选择器;  多功能文件选择器;  文字选择器;  文本选择器;    
 [链接](blog/calendar.md)  
 
 尺子;  图形图表;  仪表盘;  刻度盘;  时钟;  钟表  
 [链接](blog/chart.md)   
 
 
-Spannable;  文本相关;  文字变换特效;  中文排版;  字号;  AutoSize  
-文字跟随手指缩放;  摇号器;  变换的数字;  密码输入框;  倒计时;  抽奖器  
-跳动的文本;  复制粘贴;  垂直轮播;  跑马灯;  富文本;  PDF;  CodeView;  MarkDown  
+Spannable;  文本相关;  文字变换特效;  中文排版;  字号;  AutoSize;  文字跟随手指缩放;  摇号器;  变换的数字;   
+密码输入框;  倒计时;  抽奖器;  跳动的文本;  复制粘贴;  垂直轮播;  跑马灯;  富文本;  PDF;  CodeView;  MarkDown;  
 歌词效果;  气泡;  徽章;  文本标签;  三角标签;  锚点标签;  Badge    
 [链接](blog/text.md)  
 
@@ -63,8 +55,7 @@ Spannable;  文本相关;  文字变换特效;  中文排版;  字号;  AutoSize
 轮播图;  画廊效果;  旋转木马  
 [链接](blog/banner.md)   
 
-Layout相关;  展开与折叠的Layout;  斜线布局;  虚线控件;  圆角化布局  
-翻页效果;  ViewPager;  头像组;  随机相册;  上下翻页;       
+Layout相关;  展开与折叠的Layout;  斜线布局;  虚线控件;  圆角化布局;  翻页效果;  ViewPager;  头像组;  随机相册;  上下翻页;       
 [链接](blog/layout.md)   
 
 
@@ -72,16 +63,13 @@ Layout相关;  展开与折叠的Layout;  斜线布局;  虚线控件;  圆角�
 [链接](blog/pager_transitions.md)   
 
 
-滑动返回;  拖动排序;  滑动删除;  通讯录;  联系人;  MapView;  课程表;  流式布局   
-自由拖动;  仿支付宝选票;  拖拽的gridView;  列表;  翻页;  滚动效果   
-可以拖动的 TreeView;  下拉效果;  视觉差;  下拉刷新;  下拉放大;  视觉差列表
+滑动返回;  拖动排序;  滑动删除;  通讯录;  联系人;  MapView;  课程表;  流式布局;  自由拖动;  仿支付宝选票;  拖拽的gridView;   
+列表;  翻页;  滚动效果;  可以拖动的 TreeView;  下拉效果;  视觉差;  下拉刷新;  下拉放大;  视觉差列表;  
 sticky listView;   sticky header;  item加载效果;  Shimmer;             
 [链接](blog/swipe_back_sort_list.md)   
 
 
-
-画图板;  刮刮卡;  操作引导;  引导页;  Splash;  
-手势密码;  数字密码;  屏锁密码;  密码锁;    
+画图板;  刮刮卡;  操作引导;  引导页;  Splash;  手势密码;  数字密码;  屏锁密码;  密码锁;    
 [链接](blog/sketchpad.md)   
 
 

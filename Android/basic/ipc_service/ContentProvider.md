@@ -22,6 +22,7 @@ ContentProvider 读取数据, 使用了匿名共享内存, CursorWindow 就是�
 
 
 
+
 ### 参考  
 http://www.jianshu.com/p/ea8bc4aaf057  
 http://blog.csdn.net/hehe26/article/details/51784355  
@@ -44,5 +45,7 @@ https://github.com/Triple-T/simpleprovider
 原理  
 https://www.jianshu.com/p/37f366064b98  
 https://www.jianshu.com/p/37f366064b98  
+https://www.jianshu.com/p/9fdc894fb97c    
+https://www.jianshu.com/p/3c81df444034  
 
 

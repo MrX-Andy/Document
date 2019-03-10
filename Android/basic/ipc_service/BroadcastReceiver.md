@@ -60,7 +60,7 @@ LocalBroadcastManager 方式, 动态注册的局部广播, onReceive 回调的 c
 ReceiverRestrictedContext 和 Application 都是 ContextWrapper 的子类;  
 Activity -> ContextThemeWrapper -> ContextWrapper;  
 
-### 只能动态注册的广播  
+只能动态注册的广播  
 ```
 //  计时器变化, 每分钟发送一次的广播  
 public static final String ACTION_TIME_TICK = "android.intent.action.TIME_TICK";  
@@ -136,7 +136,8 @@ ContextWrapper#sendOrderedBroadcast(intent, receiverPermission, resultReceiver, 
 resultReceiver 指定一个最终的广播接收器, 相当于 finally 功能;  
 优先级较高的 BroadcastReceiver 的 onReceive 方法中, 可以调用 abortBroadcast 中断广播的继续传播;  
 
-### 粘性广播  
+
+粘性广播  
 ```
 <uses-permission android:name="android.permission.BROADCAST_STICKY"/>  
 ```
@@ -145,7 +146,7 @@ resultReceiver 指定一个最终的广播接收器, 相当于 finally 功能;
 系统网络状态的改变发送的广播就是粘性广播;  
 
 
-### 生命周期  
+生命周期  
 BroadcastReceiver 的生命周期非常短, 在 onReceive 方法内, 不可以做耗时操作, 如果有超过10秒, 会报ANR异常;  
  
 建议在 onResume 中注册, 在 onPause 中解除注册;  
@@ -325,6 +326,10 @@ https://www.jianshu.com/p/37f366064b98
 https://www.open-open.com/lib/view/open1475654927659.html  
 https://blog.csdn.net/jly0612/article/details/51258621  
 https://blog.csdn.net/kitty_landon/article/details/78849216  
+https://blog.csdn.net/shift_wwx/article/details/81223021  
+https://blog.csdn.net/shift_wwx/article/details/81227435  
+https://blog.csdn.net/zhangyongfeiyong/article/details/52022935  
+https://www.jianshu.com/p/dd04e6d97de0  
 
 
 局部广播  
