@@ -6,6 +6,11 @@ zygote#启动流程;  进程间通信;  IPC;  Binder机制;
 
 [startActivity 启动流程](basic/context/startActivity.md)  
 
+Application 内存回收机制; 内存回调;  
+[链接](basic/context/memory_callback.md)      
+
+对四大组件的认识;  对 Context 的认识;  
+[链接](basic/context/concept.md)  
 
 Activity;  Fragment;  Context;  Application;  
 [链接](basic/context/Activity.md)  
@@ -16,9 +21,7 @@ Activity;  Fragment;  Context;  Application;
 [AIDL](basic/ipc_service/AIDL.md)  
 [Handler](basic/handler/Handler.md)  
 [Intent](basic/context/Intent.md)   
-Application 内存回收机制; 内存回调;  
-[链接](basic/context/memory_callback.md)      
-[对 Context 的认识](basic/context/concept.md)  
+
 
 MIME数据类型;  统一资源标识符 URI;  
 [链接](/ComputerScience/network/URI.md)   
