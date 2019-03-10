@@ -40,11 +40,10 @@ public void onReceive(Context context, Intent intent) {
 ```
  
 
-![Context](../ImageFiles/context_001.png)  
+![Context](ImageFiles/context_001.png)  
 
 
->  参考 
-
+### 参考  
 http://www.jianshu.com/p/46c35c5079b4     
 http://www.jianshu.com/p/994cd73bde53    
 http://www.jianshu.com/p/94e0f9ab3f1d  

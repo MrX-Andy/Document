@@ -1,6 +1,6 @@
 ### 65535问题  
 
-> app gradle
+app gradle  
 ```
 android {
 
@@ -11,15 +11,16 @@ android {
 }
 ```
 
-> Application
+
+Application  
 ```
 override fun attachBaseContext(base: Context?) {
     super.attachBaseContext(base)
     MultiDex.install(base)
 }
 ```
-### MultiDex  
 
+MultiDex  
 因为在Dalvik指令集里，调用方法的invoke-kind指令中，method reference index只给了16bits，最多能调用65535个方法，  
 所以在生成dex文件的过程中，  当方法数超过65535就会报错。细看指令集，除了method，field和class的index也是16bits，所以也存在65535的问题。  
 一般来说，method的数目会比field和class多，所以method数会首先遇到65535问题，你可能都没机会见到field过65535的情况。  
@@ -30,7 +31,7 @@ override fun attachBaseContext(base: Context?) {
 因此，如果您收到 java.lang.NoClassDefFoundError，则必须使用构建类型中的 multiDexKeepFile 或 multiDexKeepProguard 属性声明它们，  
 以手动将这些其他类指定为主 DEX 文件中的必需项。如果类在 multiDexKeepFile 或 multiDexKeepProguard 文件中匹配，则该类会添加至主 DEX 文件。  
 
-### multiDexKeepFile 属性  
+multiDexKeepFile 属性  
 您在 multiDexKeepFile 中指定的文件应该每行包含一个类，并且采用 com/example/MyClass.class 的格式。  
 例如，您可以创建一个名为 multidex-config.txt 的文件，如下所示：  
 ```
@@ -49,7 +50,9 @@ android {
 }
 ```
 请记住，Gradle 会读取相对于 build.gradle 文件的路径，因此如果 multidex-config.txt 与 build.gradle 文件在同一目录中，以上示例将有效。  
-### multiDexKeepProguard 属性  
+
+
+multiDexKeepProguard 属性  
 multiDexKeepProguard 文件使用与 Proguard 相同的格式，并且支持整个 Proguard 语法。  
 您在 multiDexKeepProguard 中指定的文件应该在任何有效的 ProGuard 语法中包含 -keep 选项。  
 例如，-keep com.example.MyClass.class。您可以创建一个名为 multidex-config.pro 的文件，如下所示：  
@@ -73,7 +76,7 @@ android {
 }
 ```
 
-❊ 参考  
+### 参考  
 http://jiajixin.cn/2015/10/21/field-65535/  
 http://www.jianshu.com/p/33f22b21ef1e  
 https://developer.android.com/studio/build/multidex  

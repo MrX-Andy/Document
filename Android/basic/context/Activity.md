@@ -1,35 +1,25 @@
-### 对Context的认识  
-
-[基本概念](library/concept.md)  
 [关于展示吐司和通知](library/open_toast_notification.md)     
+[Activity启动模式与任务栈](library/launchMode.md)    
+[清单文件Activity标签属性](library/manifest_tag.md)    
+[状态栏高度24dp](ImageFiles/status_bar_height.png)    
+[Activity常见方法](library/function.md)   
+[Fragment重叠异常](library/solution_001.md)  
 
-### Application   
-[Application内存回调](library/memory_callback.md)    
-[内存回收机制](library/memory_trim.md)  
-[对MultiDex 65535 的认识](library/multiDex.md)  
-
-
-###生命周期  
 不管 Activity 是不是被回收, 只要执行 onStop 就一定会先执行 onSaveInstanceState;  
-
-启动一个 Activity 和 Fragment, 他们的生命周期方法, 调用顺序;  
-切换横竖屏;  屏幕锁;  
-[链接](lifecycle/lifecycle_sample.md)  
 
 Activity 会通过 android:id 逐个恢复View的State;  
 也就是说, 如果 android:id 为空, View 将不具备恢复 State 的能力了;  
 所有的自定义控件, 都应该实现State相关方法, onSaveInstanceState and onRestoreInstanceState;  
 一旦Fragment从回退栈出来，Fragment本身还在，View却是重新创建的;  
 但是给 TextView, EditText 设置 android:freezeText="true" 会让其在 Fragment 内, 自动保存State;     
-### Activity 
-[Activity启动模式与任务栈](library/launchMode.md)    
-[清单文件Activity标签属性](library/manifest_tag.md)    
-[状态栏高度24dp](ImageFiles/status_bar_height.png)    
-[Activity常见方法](library/function.md)   
+
+启动一个 Activity 和 Fragment, 他们的生命周期方法, 调用顺序;  
+切换横竖屏;  屏幕锁;  
+[链接](library/lifecycle_sample.md)  
 
 ### Fragment  
-### setRetainInstance  
 
+setRetainInstance  
 Fragment 具有属性 retainInstance, 默认值为 false;   
 当设备旋转时, fragment 会随托管 activity 一起销毁并重建;  
 
@@ -44,8 +34,7 @@ Fragment 具有属性 retainInstance, 默认值为 false;
 并且, 被保存的Fragment实例不会保持太久, 若长时间没有容器承载它, 也会被系统回收掉的;  
 
 [FragmentManagerImpl, Api21](library/FragmentManagerImplApi21.md)  
-### getActivity()空指针问题  
-
+getActivity()空指针问题  
 ❀ 搞清楚, 为什么f.mActivity() 为空    
 如果app长时间在后台运行, 再次进入app的时候可能会出现crash, 而且fragment会有重叠现象;  
 如果系统内存不足、切换横竖屏、app长时间在后台运行, Activity都可能会被系统回收然后重建,   
@@ -74,15 +63,54 @@ FragmentManager.executePendingTransactions() 也可以实现立即提交事务;
 此外, 这个方法提交的事务可能不会被添加到 FragmentManger 的后退栈, 因为你这样直接提交, 有可能影响其他异步执行任务在栈中的顺序;  
 和 commit() 一样, commitNow() 也必须在 Activity 保存状态前调用, 否则会抛异常;  
 
-[Fragment重叠异常](library/solution_001.md)  
-
-
-### attach 与 detach  
+attach 与 detach  
 transaction.attach(fragment); 对应 onCreateView-onViewCreated-onActivityCreated-onStart-onResume    
 transaction.detach(fragment);  对应 onPause-onStop-onDestroyView  
 
-fragmentManager 与 transaction
-[链接](library/transaction.md)  
+
+#### transaction  
+1.. replace  加入回退栈, Fragment不销毁, 但是切换回销毁视图和重新创建视图;  
+2.. replace  未加回退栈, Fragment销毁掉;  
+3.. hide. show. Fragment不销毁，也不销毁视图, 隐藏和显示不走生命周期;  
+
+replace, AFragment 加入回退栈  
+在同一个位置, 第一次 replace AFragment, 第二次replace BFragment;    
+```
+A: onAttach -> onCreate -> onCreateView -> onActivityCreated -> onStart -> onResume;  
+A: onPause -> onStop -> onDestroyView   
+B: onAttach -> onCreate -> onCreateView -> onActivityCreated -> onStart -> onResume;  
+```
+
+replace, AFragment 未加回退栈  
+在同一个位置, 第一次 replace AFragment, 第二次replace BFragment;    
+```
+A: onAttach -> onCreate -> onCreateView -> onActivityCreated -> onStart -> onResume;  
+A: onPause -> onStop -> onDestroyView -> onDestroy -> onDetach  
+B: onAttach -> onCreate -> onCreateView -> onActivityCreated -> onStart -> onResume;  
+```
+
+
+detach 与 attach  
+fragmentTransaction.detach(fragmentA);  
+```
+onPause -> onStop -> onDestroyView  
+```
+fragmentTransaction.attach(fragmentA);  
+```
+onCreateView -> onActivityCreated -> onStart -> onResume  
+```
+
+#### fragmentManager  
+
+popBackStack(String tag,int flags)  
+```
+如果  tag = null, flags = 0, 弹出回退栈中最上层的那个fragment  
+如果  tag = null, flags = 1, 弹出回退栈中所有fragment  
+如果  tag != null, flags = 0, 弹出该fragment以上的所有Fragment, 不包括 tag
+如果  tag != null, flags = 1, 弹出该fragment以上的所有Fragment, 包括 tag  
+原本 D -> C -> B -> A ;  
+执行 
+```
 
 未挂载异常  
 ```
@@ -93,6 +121,9 @@ manager.executePendingTransactions();
 ```
 
 ###  参考  
+https://inthecheesefactory.com/blog/fragment-state-saving-best-practices/en  
+https://github.com/nuuneoi/StatedFragment  
+
 ❀  Activity 参考  
 http://liuwangshu.cn/framework/ams/2-activitytask.html  
 http://liuwangshu.cn/framework/component/6-activity-start-1.html  
