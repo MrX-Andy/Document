@@ -17,6 +17,10 @@ https://github.com/MisterBooo/LeetCodeAnimation
 http://www.ruanyifeng.com/blog/algorithm/  
 https://juejin.im/post/5c56f06de51d457fc905cb31  
 https://github.com/wangzheng0822/algo/tree/master/java  
+http://poj.org/problemlist  
+https://hihocoder.com/problemset  
+https://blog.csdn.net/qq_25827845/article/list/4  
+
 
 
 
